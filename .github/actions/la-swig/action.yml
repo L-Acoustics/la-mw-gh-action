@@ -21,7 +21,7 @@ runs:
         echo "RUNNER_ARCH=${{runner.arch}}" >> $GITHUB_ENV
 
     - name: Cache Swig install
-      id: cache-swig
+      id: cache-swig-restore
       uses: actions/cache/restore@v4
       with:
         path: ${{ runner.os == 'Windows' && 'tools/swig' || 'swig_install' }}
@@ -109,7 +109,7 @@ runs:
         & "${{ github.workspace }}\tools\swig\bin\swig.exe" -version
 
     - name: Cache Swig install
-      id: cache-swig
+      id: cache-swig-save
       uses: actions/cache/save@v4
       with:
         path: ${{ runner.os == 'Windows' && 'tools/swig' || 'swig_install' }}

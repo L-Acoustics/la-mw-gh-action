@@ -56,13 +56,14 @@ runs:
       if: inputs.os == 'windows'
       shell: bash
       run: |
-        winpcap_url="https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip"
+        wpdpack_zip_name="WpdPack_4_1_2.zip"
+        winpcap_url="https://www.winpcap.org/install/bin/$wpdpack_zip_name"
         winpcap_ext_dir="${{github.workspace}}/externals/3rdparty/winpcap"
         if [ ! -d $winpcap_ext_dir ]; then
           mkdir --parent $winpcap_ext_dir
         fi
-        wget -O winpcap.zip $winpcap
-        unzip winpcap.zip -d _winpcap
+        curl -O $winpcap_url
+        unzip $wpdpack_zip_name -d _winpcap
         mv _winpcap/WpdPack/Include $winpcap_ext_dir/Include
         mv _winpcap/WpdPack/Lib $winpcap_ext_dir/Lib
 
