@@ -22,7 +22,7 @@ runs:
 
     - name: Cache Swig install
       id: cache-swig
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: ${{ runner.os == 'Windows' && 'tools/swig' || 'swig_install' }}
         key: swig-${{ env.SWIG_BRANCH }}-${{ runner.os }}-${{ runner.arch }}
@@ -108,6 +108,12 @@ runs:
         cmake --install build --config Release
         & "${{ github.workspace }}\tools\swig\bin\swig.exe" -version
 
+    - name: Cache Swig install
+      id: cache-swig
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.os == 'Windows' && 'tools/swig' || 'swig_install' }}
+        key: swig-${{ env.SWIG_BRANCH }}-${{ runner.os }}-${{ runner.arch }}
     # ----------------- Outputs -----------------
     - name: Set output directories
       id: write_output_paths
