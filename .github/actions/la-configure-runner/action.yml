@@ -19,19 +19,18 @@ runs:
         fi
         echo "Running on platform [$input_os]"
 
-    - name: (LINUX) Install dependencies
+    # ----------------- Linux -----------------
+    - name: Install dependencies
       if: inputs.os == 'linux'
       shell: bash
       run: |
-        echo "****************** [LINUX-CONFIGURE] APT DEPS"
         sudo apt-get update
         sudo apt-get install -y wget ninja-build build-essential
 
-    - name: (LINUX) Install CMake 
+    - name: Install CMake 
       if: inputs.os == 'linux' 
       shell: bash
       run: |
-        echo "****************** [LINUX-CONFIGURE] INSTALL CMAKE"
         set +xe
         which cmake &> /dev/null 
         if [ $? -ne 0 ]; then
@@ -42,41 +41,53 @@ runs:
           sudo ./$cmake_script --skip-license --prefix=/usr/local
         fi
         CMAKE_VERSION=$(cmake --version | awk '/version/ {print $3}')
-        echo "****************** [LINUX-CONFIGURE] USING CMAKE: ${CMAKE_VERSION}"
+        echo "USING CMAKE: ${CMAKE_VERSION}"
 
-    - name: (WINDOWS) Install job dependencies
+    # ----------------- Windows -----------------
+    - name: Install job dependencies
       if: inputs.os == 'windows'
       shell: bash
       run: |
-        echo "****************** [WINDOWS-CONFIGURE] CHOCO DEPS"
         choco install -y grep
-
         CMAKE_VERSION=$(cmake --version | awk '/version/ {print $3}')
-        echo "****************** [WINDOWS-CONFIGURE] USING CMAKE: ${CMAKE_VERSION}"
+        echo "USING CMAKE: ${CMAKE_VERSION}"
 
-    - name: (WINDOWS) Configure compiler and generator
+    - name: Install winpcap
+      if: inputs.os == 'windows'
+      shell: bash
+      run: |
+        winpcap_url="https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip"
+        winpcap_ext_dir="${{github.workspace}}/externals/3rdparty/winpcap"
+        if [ ! -d $winpcap_ext_dir ]; then
+          mkdir --parent $winpcap_ext_dir
+        fi
+        wget -O winpcap.zip $winpcap
+        unzip winpcap.zip -d _winpcap
+        mv _winpcap/WpdPack/Include $winpcap_ext_dir/Include
+        mv _winpcap/WpdPack/Lib $winpcap_ext_dir/Lib
+
+    - name: Configure compiler and generator cli
       if: inputs.os == 'windows'
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
 
-    - name: (MACOS) Install job dependencies
+    # ----------------- macOS -----------------
+    - name: Install job dependencies
       if: inputs.os == 'macos'
       shell: bash
       run : |
-        echo "****************** [MACOS-CONFIGURE] BREW DEPS"
         brew install ninja
         brew install wget
         brew install bash
         brew install grep
         echo "$(brew --prefix grep)/libexec/gnubin" >> $GITHUB_PATH
 
-    - name: (MACOS) Install CMake
+    - name: Install CMake
       if: inputs.os == 'macos'
       shell: bash
       run : |
-        echo "****************** [MACOS-CONFIGURE] INSTALL CMAKE"
         set -xe # exit on first error
         which cmake &> /dev/null 
         CMAKE_VERSION=$(cmake --version | awk '/version/ {print $3}')
-        echo "****************** [MACOS-CONFIGURE] USING CMAKE: ${CMAKE_VERSION}"
+        echo "USING CMAKE: ${CMAKE_VERSION}"
