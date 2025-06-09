@@ -29,7 +29,7 @@ runs:
 
     # ----------------- Linux -----------------
     - name: Install dependencies (Linux)
-      if: runner.os == 'Linux' && steps.cache-swig.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux' && steps.cache-swig-restore.outputs.cache-hit != 'true'
       shell: bash
       run: |
         sudo apt-get update
@@ -37,7 +37,7 @@ runs:
 
     # ----------------- macOS -----------------
     - name: Install dependencies (macOS)
-      if: runner.os == 'macOS' && steps.cache-swig.outputs.cache-hit != 'true'
+      if: runner.os == 'macOS' && steps.cache-swig-restore.cache-hit != 'true'
       shell: bash
       run: |
         brew install ninja wget bash grep autoconf automake bison readline
@@ -50,14 +50,14 @@ runs:
 
     # ----------------- Windows -----------------
     - name: Install dependencies (Windows)
-      if: runner.os == 'Windows' && steps.cache-swig.outputs.cache-hit != 'true'
+      if: runner.os == 'Windows' && steps.cache-swig-restore.cache-hit != 'true'
       shell: powershell
       run: |
         nuget install PCRE2 -OutputDirectory $env:GITHUB_WORKSPACE\tools
         nuget install Bison -OutputDirectory $env:GITHUB_WORKSPACE\tools
 
     - name: Prepare Windows environment
-      if: runner.os == 'Windows' && steps.cache-swig.outputs.cache-hit != 'true'
+      if: runner.os == 'Windows' && steps.cache-swig-restore.cache-hit != 'true'
       shell: bash
       run: |
         github_workspace=$(pwd)
@@ -67,14 +67,14 @@ runs:
 
     # ----------------- Clone Repo -----------------
     - name: Pull swig repository
-      if: steps.cache-swig.outputs.cache-hit != 'true'
+      if: steps.cache-swig-restore.cache-hit != 'true'
       shell: bash
       run: |
         git clone -b $SWIG_BRANCH $SWIG_REPOSITORY --single-branch
 
     # ----------------- Build (Linux/macOS) -----------------
     - name: Configure and Build (Linux/macOS)
-      if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-swig.outputs.cache-hit != 'true'
+      if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-swig-restore.cache-hit != 'true'
       shell: bash
       working-directory: ./swig
       run: |
@@ -87,7 +87,7 @@ runs:
 
     # ----------------- Build (Windows) -----------------
     - name: Configure (Windows)
-      if: runner.os == 'Windows' && steps.cache-swig.outputs.cache-hit != 'true'
+      if: runner.os == 'Windows' && steps.cache-swig-restore.cache-hit != 'true'
       shell: powershell
       working-directory: ./swig
       run: |
@@ -100,7 +100,7 @@ runs:
           -DLINK_FLAGS="/NODEFAULTLIB:MSVCRT" -S . -B build
 
     - name: Build and Install (Windows)
-      if: runner.os == 'Windows' && steps.cache-swig.outputs.cache-hit != 'true'
+      if: runner.os == 'Windows' && steps.cache-swig-restore.cache-hit != 'true'
       shell: powershell
       working-directory: ./swig
       run: |
