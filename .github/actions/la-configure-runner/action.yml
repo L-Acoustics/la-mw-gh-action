@@ -11,24 +11,32 @@ runs:
     - name: Check support
       shell: bash
       run: |
-        supported_os=("linux" "windows" "macos")
-        input_os=${{inputs.os}}
+        supported_os=("Linux" "Windows" "macOS")
+        input_os=${{runner.os}}
         if [[ ! " ${supported_os[@]} " =~ " $input_os " ]]; then
           echo "Error: Un-supported OS ${{inputs.os}}. Supported os values: ${supported_os[*]}."
           exit 1
         fi
         echo "Running on platform [$input_os]"
 
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "SWIG_BRANCH=aggregated_release" >> $GITHUB_ENV
+        echo "SWIG_REPOSITORY=https://github.com/christophe-calmejane/swig.git" >> $GITHUB_ENV
+        echo "RUNNER_OS=${{runner.os}}" >> $GITHUB_ENV
+        echo "RUNNER_ARCH=${{runner.arch}}" >> $GITHUB_ENV
+
     # ----------------- Linux -----------------
     - name: Install dependencies
-      if: inputs.os == 'linux'
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         sudo apt-get update
         sudo apt-get install -y wget ninja-build build-essential libpcap-dev
 
     - name: Install CMake 
-      if: inputs.os == 'linux' 
+      if: runner.os == 'Linux' 
       shell: bash
       run: |
         set +xe
@@ -45,7 +53,7 @@ runs:
 
     # ----------------- Windows -----------------
     - name: Install job dependencies
-      if: inputs.os == 'windows'
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         choco install -y grep
@@ -53,7 +61,7 @@ runs:
         echo "USING CMAKE: ${CMAKE_VERSION}"
 
     - name: Install winpcap
-      if: inputs.os == 'windows'
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         wpdpack_zip_name="WpdPack_4_1_2.zip"
@@ -68,14 +76,14 @@ runs:
         mv _winpcap/WpdPack/Lib $winpcap_ext_dir/Lib
 
     - name: Configure compiler and generator cli
-      if: inputs.os == 'windows'
+      if: runner.os == 'Windows'
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
 
     # ----------------- macOS -----------------
     - name: Install job dependencies
-      if: inputs.os == 'macos'
+      if: runner.os == 'macOS'
       shell: bash
       run : |
         brew install ninja
@@ -85,7 +93,7 @@ runs:
         echo "$(brew --prefix grep)/libexec/gnubin" >> $GITHUB_PATH
 
     - name: Install CMake
-      if: inputs.os == 'macos'
+      if: runner.os == 'macOS'
       shell: bash
       run : |
         set -xe # exit on first error
