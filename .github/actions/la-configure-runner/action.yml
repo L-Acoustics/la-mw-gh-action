@@ -4,7 +4,7 @@ inputs:
   os:
     description: 'The operating system to configure the runner'
     required: true
-  
+
 runs:
   using: "composite"
   steps:
@@ -35,12 +35,12 @@ runs:
         sudo apt-get update
         sudo apt-get install -y wget ninja-build build-essential libpcap-dev
 
-    - name: Install CMake 
-      if: runner.os == 'Linux' 
+    - name: Install CMake
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         set +xe
-        which cmake &> /dev/null 
+        which cmake &> /dev/null
         if [ $? -ne 0 ]; then
           arch=$([ $(uname -m) = "arm64" ] && echo "aarch64" || echo "x86_64")
           cmake_script="cmake-3.31.5-linux-$arch.sh"
@@ -97,6 +97,6 @@ runs:
       shell: bash
       run : |
         set -xe # exit on first error
-        which cmake &> /dev/null 
+        which cmake &> /dev/null
         CMAKE_VERSION=$(cmake --version | awk '/version/ {print $3}')
         echo "USING CMAKE: ${CMAKE_VERSION}"
