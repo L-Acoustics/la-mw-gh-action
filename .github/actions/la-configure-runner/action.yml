@@ -110,12 +110,11 @@ runs:
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        kc_password="${{inputs.keychain_password}}"
+        keychain_password="${{inputs.keychain_password}}"
         la_apple_certificate_p12_base64="${{inputs.la_apple_certificate_p12_base64}}"
         la_apple_certificate_p12_base64_password="${{inputs.la_apple_certificate_p12_base64_password}}"
 
         echo "Setting up keychain"
-        security create-keychain -p "$keychain_password" build.keychain
         security default-keychain -s build.keychain
         security unlock-keychain -p "$keychain_password" build.keychain
         echo "$la_apple_certificate_p12_base64" | base64 --decode > certificate.p12
