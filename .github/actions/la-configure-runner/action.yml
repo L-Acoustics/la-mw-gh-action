@@ -100,3 +100,19 @@ runs:
         which cmake &> /dev/null
         CMAKE_VERSION=$(cmake --version | awk '/version/ {print $3}')
         echo "USING CMAKE: ${CMAKE_VERSION}"
+
+    - name: Setup keychain
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        [ -z ${{secrets.KEYCHAIN_PASSWORD}} ] || ( echo "Please set secrets.KEYCHAIN_PASSWORD. exiting..." && exit 1)
+        [ -z ${{secrets.LA_APPLE_CERTIFICATE_P12_BASE64}} ] || ( echo "Please set secrets.LA_APPLE_CERTIFICATE_P12_BASE64 exiting..." && exit 1)
+        echo "Setting up keychain"
+        security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD}}" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD}}" build.keychain
+        echo "${{ secrets.LA_APPLE_CERTIFICATE_P12_BASE64 }}" | base64 --decode > certificate.p12
+        security import certificate.p12 -k build.keychain -P "${{ secrets.LA_APPLE_CERTIFICATE_P12_BASE64}}" -T /usr/bin/productsign -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "${{ secrets.KEYCHAIN_PASSWORD}}" build.keychain
+        echo "Printing available identities:"
+        security find-identity
