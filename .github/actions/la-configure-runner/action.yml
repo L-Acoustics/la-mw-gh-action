@@ -3,7 +3,7 @@ description: 'Configure the runner to build LA lib/app'
 inputs:
   keychain_password:
     description:  'The keychain password to use'
-  la_apple_certificate_p12_b64:
+  la_apple_certificate_p12_base64:
     description: 'The base64 encoded certificate'
   os:
     description: 'The operating system to configure the runner'
@@ -108,14 +108,16 @@ runs:
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        [ -z ${{inputs.KEYCHAIN_PASSWORD}} ] || ( echo "Please set secrets.KEYCHAIN_PASSWORD. exiting..." && exit 1)
-        [ -z ${{inputs.LA_APPLE_CERTIFICATE_P12_BASE64}} ] || ( echo "Please set secrets.LA_APPLE_CERTIFICATE_P12_BASE64 exiting..." && exit 1)
+        kc_password="${{inputs.keychain_password}}"
+        certificate_p12_base64="${{inputs.la_apple_certificate_p12_base64}}"
+        [[ $kc_password -eq "" ]] && ( echo "Please set secrets.KEYCHAIN_PASSWORD. exiting..." && exit 1)
+        [[ $certificate_p12_base64 -eq "" ]] && ( echo "Please set secrets.LA_APPLE_CERTIFICATE_P12_BASE64. exiting..." && exit 1)
         echo "Setting up keychain"
-        security create-keychain -p "${{ inputs.keychain_password}}" build.keychain
+        security create-keychain -p "$keychain_password" build.keychain
         security default-keychain -s build.keychain
-        security unlock-keychain -p "${{ inputs.keychain_password}}" build.keychain
-        echo "${{ inputs.la_apple_certificate_p12_base64 }}" | base64 --decode > certificate.p12
-        security import certificate.p12 -k build.keychain -P "${{ inputs.la_apple_certificate_p12_base64_password}}" -T /usr/bin/productsign -T /usr/bin/codesign
-        security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "${{ inputs.keychain_password}}" build.keychain
+        security unlock-keychain -p "$keychain_password" build.keychain
+        echo "$la_apple_certificate_p12_base64" | base64 --decode > certificate.p12
+        security import certificate.p12 -k build.keychain -P "$la_apple_certificate_p12_base64_password" -T /usr/bin/productsign -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "$keychain_password" build.keychain
         echo "Printing available identities:"
         security find-identity
