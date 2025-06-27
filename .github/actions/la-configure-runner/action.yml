@@ -3,11 +3,13 @@ description: 'Configure the runner to build LA lib/app'
 inputs:
   keychain_password:
     description:  'The keychain password to use'
-  la_apple_certificate_p12_base64_password:
-    description: 'The certificate password'
-  la_apple_certificate_p12_base64:
-    description: 'The base64 encoded certificate'
-  la_apple_certificate_app_p12_base64:
+  apple_certificate_installer_p12_base64_password:
+    description: 'The installer certificate password'
+  apple_certificate_app_p12_base64_password:
+    description: 'The app certificate password'
+  apple_certificate_installer_p12_base64:
+    description: 'The base64 encoded certificate for installer signing'
+  apple_certificate_app_p12_base64:
     description: 'The base64 encoded certificate for app signing'
   setup_keychain:
     description: 'Should setup the keychain certificate for macos code signing.'
@@ -116,17 +118,18 @@ runs:
       shell: bash
       run: |
         keychain_password="${{inputs.keychain_password}}"
-        la_apple_certificate_p12_base64="${{inputs.la_apple_certificate_p12_base64}}"
-        la_apple_certificate_app_p12_base64="${{inputs.la_apple_certificate_app_p12_base64}}"
-        la_apple_certificate_p12_base64_password="${{inputs.la_apple_certificate_p12_base64_password}}"
+        apple_certificate_app_p12_base64="${{inputs.apple_certificate_app_p12_base64}}"
+        apple_certificate_app_p12_base64_password="${{inputs.apple_certificate_app_p12_base64_password}}"
+        apple_certificate_installer_p12_base64="${{inputs.apple_certificate_installer_p12_base64}}"
+        apple_certificate_installer_p12_base64_password="${{inputs.apple_certificate_installer_p12_base64_password}}"
 
         echo "Setting up keychain"
         security default-keychain -s build.keychain
         security unlock-keychain -p "$keychain_password" build.keychain
-        echo "$la_apple_certificate_p12_base64" | base64 --decode > certificate.p12
-        echo "$la_apple_certificate_app_p12_base64" | base64 --decode > certificate_app.p12
-        security import certificate_app.p12 -k build.keychain -P "$la_apple_certificate_p12_base64_password" -T /usr/bin/productsign -T /usr/bin/codesign
-        security import certificate.p12 -k build.keychain -P "$la_apple_certificate_p12_base64_password" -T /usr/bin/productsign -T /usr/bin/codesign
+        echo "$apple_certificate_installer_p12_base64" | base64 --decode > certificate.p12
+        echo "$apple_certificate_app_p12_base64" | base64 --decode > certificate_app.p12
+        security import certificate.p12 -k build.keychain -P "$apple_certificate_installer_p12_base64_password" -T /usr/bin/productsign -T /usr/bin/codesign
+        security import certificate_app.p12 -k build.keychain -P "$apple_certificate_app_p12_base64_password" -T /usr/bin/productsign -T /usr/bin/codesign
         security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "$keychain_password" build.keychain
         echo "Printing available identities:"
         security find-identity
