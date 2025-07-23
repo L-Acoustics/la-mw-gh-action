@@ -1,0 +1,103 @@
+name: 'LA build'
+description: 'Build the LA lib or app'
+inputs:
+  push_bindings:
+    description: "Whether to (build and) push the csharp bindings"
+    default: 'false'
+  GTEST_FILTER:
+    description: "The filter to be applied to gtest execution."
+    default: "-INTEGRATION*"
+  SWIG_EXEC:
+    description: "The swig executable path"
+  SWIG_DIR:
+    description: "The swig directory path"
+  BUILD_DIR:
+    description: "The build directory."
+    default: "_build"
+  MACOS_SIGNING_IDENTITY:
+    description: "The signing identity to use if no default is provided."
+    default: "-"
+  include_nuget_la_feed_url:
+    description:  "Whether to include the L-Acoustics nuget feed url as source, required if pushing to a different feed than L-Acoustics one"
+    default: 'false'
+  CONFIG:
+    description: "The build configuration, debug or release"
+  NUGET_CURRENT_FEED_URL:
+    description:  "The nuget feed url to pushed the package to"
+  LIB_NAME:
+    description: "The library or app name"
+  NUGET_LA_FEED_URL:
+    description: "The L-Acoustics nuget feed url"
+    default: https://nuget.pkg.github.com/L-Acoustics/index.json
+  GITHUB_TOKEN:
+    description: "The github token used to push package"
+
+runs:
+  using: composite
+  steps:
+    - name: Check support
+      shell: bash
+      run: |
+        supported_os=("Linux" "Windows" "macOS")
+        input_os=${{runner.os}}
+        if [[ ! " ${supported_os[@]} " =~ " $input_os " ]]; then
+          echo "Error: Un-supported OS ${{runner.os}}. Supported os values: ${supported_os[*]}."
+          exit 1
+        fi
+        echo "Running on platform [$input_os]"
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "RUNNER_OS=${{runner.os}}" >> $GITHUB_ENV
+        echo "RUNNER_ARCH=${{runner.arch}}" >> $GITHUB_ENV
+        echo "NUGET_CURRENT_FEED_URL=${{inputs.NUGET_CURRENT_FEED_URL}}" >> $GITHUB_ENV
+        echo "NUGET_LA_FEED_URL=${{inputs.NUGET_LA_FEED_URL}}" >> $GITHUB_ENV
+        echo "LIB_NAME=${{inputs.LIB_NAME}}" >> $GITHUB_ENV
+        echo "GITHUB_TOKEN=${{inputs.GITHUB_TOKEN}}" >> $GITHUB_ENV
+
+    - name: Generate Cmake
+      shell: bash
+      run: |
+        echo "Generating CMake for Configuration : ${{inputs.CONFIG}}"
+        dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name current_feed "${{env.NUGET_CURRENT_FEED_URL}}"
+        if [ ${{inputs.include_nuget_la_feed_url}} = 'true' ];then
+          dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name la_feed "${{env.NUGET_LA_FEED_URL}}"
+        fi
+
+        arch=$([ ${{runner.arch}} = "X64" ] && echo "x64" || echo "arm64")
+        macos_signing_identity=$([ ${{inputs.MACOS_SIGNING_IDENTITY}} = "-" ] && echo "-" || echo "\"Developer ID Application: ${{inputs.MACOS_SIGNING_IDENTITY}}\"")
+        arch_flag=$([ ${{runner.os}} = "macOS"  ] && echo "-all-archs -id $macos_signing_identity" || echo "-arch $arch")
+        ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp $arch_flag -- \
+          "-DNUGET_PUBLISH_SOURCE_URL=current_feed" \
+          "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
+          "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
+          "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
+          "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
+
+    - name: Build
+      shell: bash
+      run: |
+        cmake --build ${{inputs.BUILD_DIR}} --target Tests
+
+    - name: Test
+      shell: bash
+      working-directory: ${{github.workspace}}/${{env.build_dir}}/tests/src
+      run: |
+        test_cmd="./Tests --gtest_filter=${{inputs.GTEST_FILTER}}"
+        if [ "${{matrix.config}}" = "debug" ]; then
+          test_cmd="./Tests-d --gtest_filter=${{inputs.GTEST_FILTER}}"
+        fi
+        eval $test_cmd
+
+    - name: Build all
+      shell: bash
+      run: |
+        cmake --build ${{inputs.BUILD_DIR}}
+
+    - name: Push bindings
+      if: inputs.push_bindings == 'true'
+      shell: bash
+      run: |
+        cmake --build ${{inputs.BUILD_DIR}} --target ${{env.LIB_NAME}}-csharp-nuget-push
+
