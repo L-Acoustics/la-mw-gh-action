@@ -4,6 +4,9 @@ on:
   workflow_call:
     secrets:
       GH_TOKEN:
+      APPLE_CERTIFICATES_P12_BASE64_PASSWORD:
+      APPLE_CERTIFICATES_P12_BASE64:
+      KEYCHAIN_PASSWORD:
     inputs:
       release_linux:
         description: 'Release the linux package'
@@ -81,22 +84,29 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v0
+    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@main
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@v0
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
+      with:
+        APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
+        APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
+        KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
+        setup_keychain: "true"
+
 
     - name: Build, Test, Push Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@e368cc944233da2d9b61c7bc3e6108cacf20b174
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@main
       with:
         push_bindings: 'true'
         GTEST_FILTER: '${{vars.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
         BUILD_DIR: "${{vars.BUILD_DIR}}"
+        MACOS_SIGNING_IDENTITY: ${{vars.MACOS_SIGNING_IDENTITY}}
         include_nuget_la_feed_url: 'false'
         CONFIG: ${{matrix.config}}
         NUGET_CURRENT_FEED_URL: 'https://nuget.pkg.github.com/L-Acoustics/index.json'

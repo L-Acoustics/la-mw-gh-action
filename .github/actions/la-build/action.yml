@@ -66,14 +66,21 @@ runs:
         fi
 
         arch=$([ ${{runner.arch}} = "X64" ] && echo "x64" || echo "arm64")
-        macos_signing_identity=$([ ${{inputs.MACOS_SIGNING_IDENTITY}} = "-" ] && echo "-" || echo "\"Developer ID Application: ${{inputs.MACOS_SIGNING_IDENTITY}}\"")
-        arch_flag=$([ ${{runner.os}} = "macOS"  ] && echo "-all-archs -id $macos_signing_identity" || echo "-arch $arch")
-        ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp $arch_flag -- \
-          "-DNUGET_PUBLISH_SOURCE_URL=current_feed" \
-          "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
-          "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
-          "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
-          "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
+        if [ ${{runner.os}} = "macOS" ];then
+          ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -all-archs -id "Developer ID Installer: ${{inputs.MACOS_SIGNING_IDENTITY}}" -- \
+            "-DNUGET_PUBLISH_SOURCE_URL=current_feed" \
+            "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
+            "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
+            "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
+            "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
+        else
+          ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -arch $arch -- \
+            "-DNUGET_PUBLISH_SOURCE_URL=current_feed" \
+            "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
+            "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
+            "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
+            "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
+        fi
 
     - name: Build
       shell: bash

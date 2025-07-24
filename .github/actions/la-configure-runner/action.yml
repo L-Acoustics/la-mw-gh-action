@@ -114,12 +114,12 @@ runs:
         KEYCHAIN_PASSWORD="${{inputs.KEYCHAIN_PASSWORD}}"
         APPLE_CERTIFICATES_P12_BASE64="${{inputs.APPLE_CERTIFICATES_P12_BASE64}}"
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD="${{inputs.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}"
-
         echo "Setting up keychain"
-        security default-keychain -s build.keychain
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" action.keychain
+        security default-keychain -s action.keychain
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" action.keychain
         echo "$APPLE_CERTIFICATES_P12_BASE64" | base64 --decode > certificate_app.p12
-        security import certificate_app.p12 -k build.keychain -P "$APPLE_CERTIFICATES_P12_BASE64_PASSWORD" -T /usr/bin/productsign -T /usr/bin/codesign
-        security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+        security import certificate_app.p12 -k action.keychain -P "$APPLE_CERTIFICATES_P12_BASE64_PASSWORD" -T /usr/bin/productsign -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "$KEYCHAIN_PASSWORD" action.keychain
         echo "Printing available identities:"
-        security find-identity
+        security find-identity -v
