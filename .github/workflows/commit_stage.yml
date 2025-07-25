@@ -147,7 +147,7 @@ jobs:
     - name: Configure runner
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
       with:
-        WINPCAP_ROOT_DESTINATION: ${{inputs.WINPCAP_ROOT_FOLDER}}
+        WINPCAP_ROOT_DESTINATION: ${{inputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
         APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
         KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
