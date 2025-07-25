@@ -7,6 +7,9 @@ inputs:
     description: 'The app certificate password'
   APPLE_CERTIFICATES_P12_BASE64:
     description: 'The base64 encoded certificate for app signing'
+  WINPCAP_ROOT_DESTINATION:
+    description: 'The root folder into which winpcap will be installed e.g. $root/externals/3rdparty/winpcap default is the current folder'
+    default: "."
   setup_keychain:
     description: 'Should setup the keychain certificate for macos code signing.'
     default: 'false'
@@ -72,7 +75,7 @@ runs:
       run: |
         wpdpack_zip_name="WpdPack_4_1_2.zip"
         winpcap_url="https://www.winpcap.org/install/bin/$wpdpack_zip_name"
-        winpcap_ext_dir="${{github.workspace}}/externals/3rdparty/winpcap"
+        winpcap_ext_dir="${{inputs.WINPCAP_ROOT_DESTINATION}}/externals/3rdparty/winpcap"
         if [ ! -d $winpcap_ext_dir ]; then
           mkdir --parent $winpcap_ext_dir
         fi

@@ -8,6 +8,12 @@ on:
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
     inputs:
+      WINPCAP_ROOT_DESTINATION:
+        type: string
+        default: "."
+      ALTERNATIVE_BASHUTILS_PATH:
+        type: string
+        default: "."
       release_linux:
         description: 'Release the linux package'
         type: boolean
@@ -40,7 +46,8 @@ jobs:
     - name: Run fix_files
       shell: bash {0}
       run: |
-        ./scripts/bashUtils/fix_files.sh
+        alternative_bashutils_path=${{inputs.ALTERNATIVE_BASHUTILS_PATH}}
+        $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
 
     - name: Check for changes
       shell: bash
@@ -92,6 +99,7 @@ jobs:
     - name: Configure runner
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
       with:
+        WINPCAP_ROOT_DESTINATION: ${{inputs.WINPCAP_ROOT_FOLDER}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
         APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
         KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
