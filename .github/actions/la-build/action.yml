@@ -67,7 +67,7 @@ runs:
 
         arch=$([ ${{runner.arch}} = "X64" ] && echo "x64" || echo "arm64")
         if [ ${{runner.os}} = "macOS" ];then
-          ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -all-archs -id "Developer ID Installer: ${{inputs.MACOS_SIGNING_IDENTITY}}" -- \
+          ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -all-archs -id "${{inputs.MACOS_SIGNING_IDENTITY}}" -- \
             "-DNUGET_PUBLISH_SOURCE_URL=current_feed" \
             "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
             "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
