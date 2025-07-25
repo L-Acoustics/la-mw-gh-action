@@ -15,15 +15,6 @@ on :
         type: string
         default: "."
 
-  # push:
-  #   branches: [ dev, main ]
-  # pull_request:
-  #   branches: [ dev ]
-  #   paths-ignore:
-  #     - 'Docker'
-  #     - '**/README.md'
-  #     - '**/LICENCE'
-
 jobs:
   validate:
     runs-on: windows-2022
@@ -106,7 +97,7 @@ jobs:
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@main
       with:
         push_bindings: 'false'
-        GTEST_FILTER: '-MANUAL*'
+        GTEST_FILTER: '${{vars.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
         BUILD_DIR: "${{vars.BUILD_DIR}}"
