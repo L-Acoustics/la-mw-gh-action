@@ -121,6 +121,8 @@ runs:
         security create-keychain -p "$KEYCHAIN_PASSWORD" action.keychain
         security default-keychain -s action.keychain
         security unlock-keychain -p "$KEYCHAIN_PASSWORD" action.keychain
+        security set-keychain-settings action.keychain
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" action.keychain
         echo "$APPLE_CERTIFICATES_P12_BASE64" | base64 --decode > certificate_app.p12
         security import certificate_app.p12 -k action.keychain -P "$APPLE_CERTIFICATES_P12_BASE64_PASSWORD" -T /usr/bin/productsign -T /usr/bin/codesign
         security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "$KEYCHAIN_PASSWORD" action.keychain
