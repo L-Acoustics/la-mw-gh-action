@@ -71,6 +71,35 @@ $> gh variable set -f .github/workflows/variables.env
 4. Repeat the steps with secrets using the `gh secret` command.
 
 ⚠️ **Do not Version the `secrets.env` files.**
+
+**Examples**:
+```env
+# .github/workflows/variables.env
+RUNNER_LABELS_MACOS='["self-hosted","mw-label"]'
+RUNNER_LABELS_WINDOWS='"windows-2022"'
+RUNNER_LABELS_LINUX='"ubuntu-22.04"'
+
+RELEASE_MACOS='true'
+RELEASE_LINUX='false'
+RELEASE_WINDOWS='true'
+
+BUILD_MACOS='true'
+BUILD_LINUX='false'
+BUILD_WINDOWS='true'
+
+LIB_NAME='my_awsome_lib'
+BUILD_DIR='_build'
+GTEST_FILTER='-INTEGRATION*'
+MACOS_SIGNING_IDENTITY="COM.COMPANY (9999999)"
+```
+
+```env
+# ./secrets.env
+KEYCHAIN_PASSWORD="mypass"
+APPLE_CERTIFICATES_P12_BASE64_PASSWORD="SecurityP@ass"
+APPLE_CERTIFICATES_P12_BASE64=12398103298140948120af123ac
+
+```
 #### Web user interface
 The repository variables and secrets can be set through the github user interface given that you have **sufficient permissions**.
 
