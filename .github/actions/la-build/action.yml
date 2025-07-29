@@ -68,14 +68,15 @@ runs:
         if [ ${{runner.os}} = "macOS" ];then
           ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -all-archs -id "${{inputs.MACOS_SIGNING_IDENTITY}}" -- \
             "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_LA_FEED_URL}}" \
-            "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKNE}}"
+            "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
             "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
             "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
             "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
             "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
         else
           ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -arch $arch -- \
-            "-DNUGET_PUBLISH_SOURCE_URL=current_feed" \
+            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_LA_FEED_URL}}" \
+            "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
             "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
             "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
             "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
