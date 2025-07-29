@@ -61,7 +61,7 @@ In addition the `commit_stage` workflow **expects** the following repository sec
 
 ### How to set repository secrets and variables
 #### (Recommended) Github cli
-The repository variables and secrets can be set through the github command line interface. ([Setup gh cli](https://docs.github.com/en/github-cli/github-cli/quickstart)). **Sufficient repository permissions** are required to set secrets and variables.
+The repository variables and secrets can be set through the github command line interface (see [setup github cli](https://docs.github.com/en/github-cli/github-cli/quickstart)). **Sufficient repository permissions** are required to set secrets and variables.
 1. Create a file `variables.env` in `.github/workflows`.
 2. Add required variables to the file. NB: All values should be surrounded by single quotes.
 3. Set the repository variables using `gh variable` command.
