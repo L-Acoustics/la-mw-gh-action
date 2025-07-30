@@ -58,6 +58,8 @@ In addition the `commit_stage` workflow **expects** the following repository sec
 |LIB_NAME               |_required_|The name of the library to push the csharp bindings 'la_avdecc_controller'|
 |GTEST_FILTER           |_required_|The GTEST filter value '-INTEGRATION*'|
 |MACOS_SIGNING_IDENTITY |_required_|The signing identity to use during macos signing "MY_COMPANY (MY_TEAM_ID)"|
+|NUGET_PUBLISH_FEED_URL |_required_|The feed url to publish the nuget package|
+|INCLUDE_NUGET_LA_FEED  |_required_|Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
 
 ### How to set repository secrets and variables
 #### (Recommended) Github cli
