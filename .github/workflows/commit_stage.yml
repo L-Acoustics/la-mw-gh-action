@@ -119,7 +119,7 @@ jobs:
         runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson w "$windows" '[$m,$l,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
         echo $runners
         if [ $runners = "[]" ]; then
-          echo "No platform selected, either set one of repository variable RELEASE_{OS} to 'true' or use the manual workflow trigger and select at least one platform."
+          echo "No platform selected, set one of repository variable BUILD_{OS} to 'true'"
           exit 1
         fi
         echo "runners=$runners" >> "$GITHUB_OUTPUT"
