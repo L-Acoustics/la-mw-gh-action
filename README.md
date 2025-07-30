@@ -13,6 +13,7 @@ There are 2 workflows representing the stages of the CI:
 Each workflow can be integrated into a repository using the following templates:
 - [commit_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/commit_stage.yml)
 - [release_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/release_stage.yml)
+
 The `commit_stage` workflow supports the following inputs and secrets:
 
 |name|default|description|
