@@ -22,7 +22,7 @@ inputs:
     default: 'false'
   CONFIG:
     description: "The build configuration, debug or release"
-  NUGET_CURRENT_FEED_URL:
+  NUGET_PUBLISH_FEED_URL:
     description:  "The nuget feed url to pushed the package to"
   LIB_NAME:
     description: "The library or app name"
@@ -51,7 +51,7 @@ runs:
       run: |
         echo "RUNNER_OS=${{runner.os}}" >> $GITHUB_ENV
         echo "RUNNER_ARCH=${{runner.arch}}" >> $GITHUB_ENV
-        echo "NUGET_CURRENT_FEED_URL=${{inputs.NUGET_CURRENT_FEED_URL}}" >> $GITHUB_ENV
+        echo "NUGET_PUBLISH_FEED_URL=${{inputs.NUGET_PUBLISH_FEED_URL}}" >> $GITHUB_ENV
         echo "NUGET_LA_FEED_URL=${{inputs.NUGET_LA_FEED_URL}}" >> $GITHUB_ENV
         echo "LIB_NAME=${{inputs.LIB_NAME}}" >> $GITHUB_ENV
         echo "GITHUB_TOKEN=${{inputs.GITHUB_TOKEN}}" >> $GITHUB_ENV
@@ -60,14 +60,14 @@ runs:
       shell: bash
       run: |
         echo "Generating CMake for Configuration : ${{inputs.CONFIG}}"
-        dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name current_feed "${{env.NUGET_CURRENT_FEED_URL}}"
+        dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name current_feed "${{env.NUGET_PUBLISH_FEED_URL}}"
         if [ ${{inputs.include_nuget_la_feed_url}} = 'true' ];then
           dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name la_feed "${{env.NUGET_LA_FEED_URL}}"
         fi
         arch=$([ ${{runner.arch}} = "X64" ] && echo "x64" || echo "arm64")
         if [ ${{runner.os}} = "macOS" ];then
           ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -all-archs -id "${{inputs.MACOS_SIGNING_IDENTITY}}" -- \
-            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_CURRENT_FEED_URL}}" \
+            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
             "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
             "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
             "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
@@ -75,7 +75,7 @@ runs:
             "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
         else
           ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -arch $arch -- \
-            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_CURRENT_FEED_URL}}" \
+            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
             "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
             "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
             "-DCU_REPO_URL=https://github.com/${{github.repository}}" \

@@ -179,9 +179,9 @@ jobs:
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
         BUILD_DIR: "${{vars.BUILD_DIR}}"
         MACOS_SIGNING_IDENTITY: ${{vars.MACOS_SIGNING_IDENTITY}}
-        include_nuget_la_feed_url: 'false'
+        include_nuget_la_feed_url: ${{vars.INCLUDE_NUGET_LA_FEED}}
         CONFIG: ${{matrix.config}}
-        NUGET_CURRENT_FEED_URL: 'https://nuget.pkg.github.com/L-Acoustics/index.json'
+        NUGET_PUBLISH_FEED_URL: ${{vars.NUGET_PUBLISH_FEED_URL}}
         LIB_NAME: "${{vars.LIB_NAME}}"
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
 
