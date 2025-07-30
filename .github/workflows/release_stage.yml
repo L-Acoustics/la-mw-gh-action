@@ -26,6 +26,10 @@ on:
         description: 'Release the macos package'
         type: string
         default: 'true'
+      create_gh_release:
+        description: 'Create the Github Release'
+        type: string
+        default: 'false'
 
 permissions:
   contents: write
@@ -180,3 +184,9 @@ jobs:
         NUGET_CURRENT_FEED_URL: 'https://nuget.pkg.github.com/L-Acoustics/index.json'
         LIB_NAME: "${{vars.LIB_NAME}}"
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag' || inputs.create_gh_release == 'true'
+      with:
+        prerelease: ${{ contains(github.ref_name, 'beta') }}
