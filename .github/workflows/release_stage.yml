@@ -16,16 +16,16 @@ on:
         default: "."
       release_linux:
         description: 'Release the linux package'
-        type: boolean
-        default: true
+        type: string
+        default: 'true'
       release_windows:
         description: 'Release the windows package'
-        type: boolean
-        default: true
+        type: string
+        default: 'true'
       release_macos:
         description: 'Release the macos package'
-        type: boolean
-        default: true
+        type: string
+        default: 'true'
 
 permissions:
   contents: write
