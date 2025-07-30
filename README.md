@@ -10,30 +10,9 @@ There are 2 workflows representing the stages of the CI:
 - The `commit_stage` workflow executing the code validate, build, test activities.
 - The `release_stage` workflow executing the code validate, build, (test) and artifact push activities.
 
-Each workflow can be integrated into a repository using the following template
-```yaml
-
-name: Commit stage
-
-on :
-  push:
-    branches: [ $MAIN_PUSH_BRANCHES ]
-  pull_request:
-    branches: [ $PR_BASE_BRANCHES ]
-    paths-ignore:
-      - 'Docker'
-      - '**/README.md'
-      - '**/LICENCE'
-
-jobs:
-  commit-stage:
-    uses: L-Acoustics/la-mw-gh-action/.github/workflows/commit_stage.yml@$VERSION_REF
-    secrets:
-      GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
-      APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
-      APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
-```
+Each workflow can be integrated into a repository using the following templates:
+- [commit_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/commit_stage.yml)
+- [release_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/release_stage.yml)
 The `commit_stage` workflow supports the following inputs and secrets:
 
 |name|default|description|
@@ -72,45 +51,6 @@ $> gh variable set -f .github/workflows/variables.env
 ```
 4. Repeat the steps with secrets using the `gh secret` command.
 
+Templates for the dotenv files can be found in [templates/workflows/dotenv](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/dotenv)
+
 ⚠️ **Do not Version the `secrets.env` files.**
-
-**Examples**:
-```env
-# .github/workflows/variables.env
-RUNNER_LABELS_MACOS='["self-hosted","mw-label"]'
-RUNNER_LABELS_WINDOWS='"windows-2022"'
-RUNNER_LABELS_LINUX='"ubuntu-22.04"'
-
-RELEASE_MACOS='true'
-RELEASE_LINUX='false'
-RELEASE_WINDOWS='true'
-
-BUILD_MACOS='true'
-BUILD_LINUX='false'
-BUILD_WINDOWS='true'
-
-LIB_NAME='my_awsome_lib'
-BUILD_DIR='_build'
-GTEST_FILTER='-INTEGRATION*'
-MACOS_SIGNING_IDENTITY="COM.COMPANY (9999999)"
-
-NUGET_PUBLISH_FEED_URL=
-INCLUDE_NUGET_LA_FEED
-```
-
-```env
-# ./secrets.env
-KEYCHAIN_PASSWORD="mypass"
-APPLE_CERTIFICATES_P12_BASE64_PASSWORD="SecurityP@ass"
-APPLE_CERTIFICATES_P12_BASE64=12398103298140948120af123ac
-
-```
-#### Web user interface
-The repository variables and secrets can be set through the github user interface given that you have **sufficient permissions**.
-
-
-
-
-
-
-
