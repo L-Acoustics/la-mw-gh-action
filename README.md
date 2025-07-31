@@ -24,7 +24,7 @@ The `commit_stage` workflow supports the following inputs and secrets:
 |WINPCAP_ROOT_DESTINATION|"." (current folder)| The folder to which the winpcap expected path will be appended. i.e. `${{inputs.WINPCAP_ROOT_DESTINATION}}/externals/3rdparty/winpcap` |
 |ALTERNATIVE_BASHUTILS_PATH|"." (current folder)| The folder to which the bashUtils expected path will be appended. i.e. `${{inputs.ALTERNATIVE_BASHUTILS_PATH}}/scripts/bashUtils` |
 
-In addition the `commit_stage` workflow **expects** the following repository secrets and variables. (How to set repository variables and secrets)
+In addition the `commit_stage` and `release_stage` workflows use the following repository secrets and variables, the variable marked as _required_ will make the job fail if empty. (How to set repository variables and secrets)
 
 |name|default|description|
 |----|-------|-----------|
