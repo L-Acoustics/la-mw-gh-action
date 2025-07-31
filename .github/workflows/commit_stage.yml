@@ -21,28 +21,29 @@ permissions:
   checks: write
   packages: write
 
+env:
+  INCLUDE_NUGET_LA_FEED: ${{ vars.INCLUDE_NUGET_LA_FEED || 'false' }}
+  NUGET_PUBLISH_FEED_URL: ${{ vars.NUGET_PUBLISH_FEED_URL || format('https://nuget.pkg.github.com/{0}/index.json',github.repository_owner) }}
+  BUILD_DIR: ${{ vars.BUILD_DIR || '_build' }}
+  MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
+  BUILD_WINDOWS: ${{ vars.BUILD_WINDOWS }}
+  BUILD_MACOS: ${{ vars.BUILD_MACOS }}
+  BUILD_LINUX: ${{ vars.BUILD_LINUX }}
+  RELEASE_MACOS: ${{ vars.RELEASE_MACOS }}
+  RELEASE_WINDOWS: ${{ vars.RELEASE_WINDOWS }}
+  RELEASE_LINUX: ${{ vars.RELEASE_LINUX }}
+  GTEST_FILTER: ${{ vars.GTEST_FILTER }}
+  LIB_NAME: ${{ vars.LIB_NAME }}
+  RUNNER_LABELS_MACOS: ${{ vars.RUNNER_LABELS_MACOS }}
+  RUNNER_LABELS_WINDOWS: ${{ vars.RUNNER_LABELS_WINDOWS }}
+  RUNNER_LABELS_LINUX: ${{ vars.RUNNER_LABELS_LINUX }}
+  APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
+  APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
+  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+
 jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
-    env:
-      INCLUDE_NUGET_LA_FEED: ${{ vars.INCLUDE_NUGET_LA_FEED || 'false' }}
-      NUGET_PUBLISH_FEED_URL: ${{ vars.NUGET_PUBLISH_FEED_URL || format('https://nuget.pkg.github.com/{0}/index.json',github.repository_owner) }}
-      BUILD_DIR: ${{ vars.BUILD_DIR || '_build' }}
-      MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
-      BUILD_WINDOWS: ${{ vars.BUILD_WINDOWS }}
-      BUILD_MACOS: ${{ vars.BUILD_MACOS }}
-      BUILD_LINUX: ${{ vars.BUILD_LINUX }}
-      RELEASE_MACOS: ${{ vars.RELEASE_MACOS }}
-      RELEASE_WINDOWS: ${{ vars.RELEASE_WINDOWS }}
-      RELEASE_LINUX: ${{ vars.RELEASE_LINUX }}
-      GTEST_FILTER: ${{ vars.GTEST_FILTER }}
-      LIB_NAME: ${{ vars.LIB_NAME }}
-      RUNNER_LABELS_MACOS: ${{ vars.RUNNER_LABELS_MACOS }}
-      RUNNER_LABELS_WINDOWS: ${{ vars.RUNNER_LABELS_WINDOWS }}
-      RUNNER_LABELS_LINUX: ${{ vars.RUNNER_LABELS_LINUX }}
-      APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
-      APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
-      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v2
@@ -165,10 +166,10 @@ jobs:
         GTEST_FILTER: '${{vars.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
-        BUILD_DIR: "${{vars.BUILD_DIR}}"
-        include_nuget_la_feed_url: 'false'
+        BUILD_DIR: "${{env.BUILD_DIR}}"
+        include_nuget_la_feed_url:  "${{env.INCLUDE_NUGET_LA_FEED}}"
         CONFIG: ${{matrix.config}}
         MACOS_SIGNING_IDENTITY: ${{env.MACOS_SIGNING_IDENTITY}}
-        NUGET_PUBLISH_FEED_URL: '${{env.NUGET_PUBLISH_FEED_URL}}'
+        NUGET_PUBLISH_FEED_URL: ${{env.NUGET_PUBLISH_FEED_URL}}
         LIB_NAME: "la_networkInterfaceHelper"
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
