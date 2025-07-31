@@ -42,8 +42,8 @@ jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
     env:
-      INCLUDE_NUGET_LA_FEED: ${{ vars.INCLUDE_NUGET_LA_FEED }}
-      NUGET_PUBLISH_FEED_URL: ${{ vars.NUGET_PUBLISH_FEED_URL }}
+      INCLUDE_NUGET_LA_FEED: ${{ vars.INCLUDE_NUGET_LA_FEED || 'false' }}
+      NUGET_PUBLISH_FEED_URL: ${{ vars.NUGET_PUBLISH_FEED_URL || format('https://nuget.pkg.github.com/{0}/index.json',github.repository_owner) }}
       BUILD_DIR: ${{ vars.BUILD_DIR }}
       MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
       BUILD_WINDOWS: ${{ vars.BUILD_WINDOWS }}

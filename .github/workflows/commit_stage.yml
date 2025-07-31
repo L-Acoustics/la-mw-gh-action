@@ -25,7 +25,7 @@ jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
     env:
-      BUILD_DIR: ${{ vars.BUILD_DIR }}
+      BUILD_DIR: ${{ vars.BUILD_DIR || '_build' }}
       MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
       BUILD_WINDOWS: ${{ vars.BUILD_WINDOWS }}
       BUILD_MACOS: ${{ vars.BUILD_MACOS }}
