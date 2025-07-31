@@ -28,7 +28,6 @@ In addition the `commit_stage` workflow **expects** the following repository sec
 
 |name|default|description|
 |----|-------|-----------|
-|BUILD_DIR              |_required_|The build directory used to generate build files|
 |RUNNER_LABELS_MACOS    |_required_|The label(s) to use for the macos runner. This should be a JSON string or a JSON array of string e.g. '"macos-14"' or '["self-hosted","my-label","my-label-2"]')|
 |RUNNER_LABELS_WINDOWS  |_required_|The label(s) to use for the windows runner. This should be a JSON string or a JSON array of string e.g. '"windows-2022"' or '["self-hosted","my-label","my-label-2"]')|
 |RUNNER_LABELS_LINUX    |_required_|The label(s) to use for the linux runner. This should be a JSON string or a JSON array of string e.g. '"ubuntu-22.04"' or '["self-hosted","my-label","my-label-2"]')|
@@ -38,8 +37,9 @@ In addition the `commit_stage` workflow **expects** the following repository sec
 |LIB_NAME               |_required_|The name of the library to push the csharp bindings 'la_avdecc_controller'|
 |GTEST_FILTER           |_required_|The GTEST filter value '-INTEGRATION*'|
 |MACOS_SIGNING_IDENTITY |_required_|The signing identity to use during macos signing "MY_COMPANY (MY_TEAM_ID)"|
-|NUGET_PUBLISH_FEED_URL |_required_|The feed url to publish the nuget package|
-|INCLUDE_NUGET_LA_FEED  |_required_|Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
+|BUILD_DIR              |'_build'|The build directory used to generate build files|
+|NUGET_PUBLISH_FEED_URL |'https://nuget.pkg.github.com/$REPO_OWNER/index.json'|The feed url to publish the nuget package|
+|INCLUDE_NUGET_LA_FEED  |'false'|Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
 
 ### How to set repository secrets and variables
 #### (Recommended) Github cli
