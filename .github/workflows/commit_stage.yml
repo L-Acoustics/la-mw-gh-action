@@ -125,12 +125,13 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.validate.outputs.matrix) }}
     runs-on: ${{matrix.labels}}
+    name: Build-test (${{matrix.config}},${{matrix.labels}},${{matrix.arch}})
     steps:
     - name: test-matrix
       shell: bash
       run: |
         echo "Matrix values"
-        echo "${{matrix.label}}"
+        echo "${{matrix.labels}}"
         echo "${{matrix.arch}}"
 
     - uses: actions/checkout@v2
