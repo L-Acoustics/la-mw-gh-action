@@ -109,25 +109,12 @@ jobs:
           exit 1
         fi
     - name: prepare-runners-matrix
-      id: runners-matrix
+      id: config-matrix
       shell: bash
       run: |
-        macos=$([ ${{vars.BUILD_MACOS}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_MACOS}}' '$r' || echo '""')
-        echo $macos
-        linux_arm64=$([ ${{vars.BUILD_LINUX}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX_ARM64}}' '$r' || echo '""')
-        echo $linux_arm64
-        linux=$([ ${{vars.BUILD_LINUX}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX}}' '$r' || echo '""')
-        echo $linux
-        windows=$([ ${{vars.BUILD_WINDOWS}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_WINDOWS}}' '$r' || echo '""')
-        echo $windows
-
-        runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson larm "$linux_arm64" --argjson w "$windows" '[$m,$l,$larm,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
-        echo $runners
-        if [ $runners = "[]" ]; then
-          echo "No platform selected, set one of repository variable BUILD_{OS} to 'true'"
-          exit 1
-        fi
-        echo "runners=$runners" >> "$GITHUB_OUTPUT"
+        runner_configs=$(echo ${{vars.BUILD_CONFIG}} | jq -c '[{include: .runner_configs},{config:["debug","release"]}]' )
+        build_configuration_string=${{vars.BUILD_CONFIG}}
+        echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
   build-test:
     needs: validate
@@ -136,14 +123,16 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        config:
-          - debug
-          - release
-        runner-label: ${{ fromJSON(needs.validate.outputs.runners) }}
-
-    runs-on: ${{matrix.runner-label}}
+      matrix: ${{ fromJSON(needs.validate.outputs.matrix) }}
+    runs-on: ${{matrix.label}}
     steps:
+    - name: test-matrix
+      shell: bash
+      run: |
+        echo "Matrix values"
+        echo "${{matrix.label}}"
+        echo "${{matrix.arch}}"
+
     - uses: actions/checkout@v2
       with:
         submodules: recursive
