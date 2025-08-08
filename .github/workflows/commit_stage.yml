@@ -144,9 +144,10 @@ jobs:
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@main
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
       with:
         push_bindings: 'false'
+        RUNNER_ARCH: ${{matrix.arch}}
         GTEST_FILTER: '${{vars.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
