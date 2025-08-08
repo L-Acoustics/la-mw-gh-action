@@ -112,7 +112,7 @@ jobs:
       id: config-matrix
       shell: bash
       run: |
-        runner_configs=$(echo ${{vars.BUILD_CONFIG}} | jq -c '{"include": .runner_configs,"config":["debug","release"]}' )
+        runner_configs=$(echo ${{vars.BUILD_CONFIG}} | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
         echo $runner_configs
         echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
