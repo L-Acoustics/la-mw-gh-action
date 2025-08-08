@@ -82,7 +82,7 @@ jobs:
     needs: pre-workflow-checks
     runs-on: windows-2022
     outputs:
-      runners: ${{ steps.runners-matrix.outputs.runners }}
+      matrix: ${{ steps.config-matrix.outputs.matrix }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -112,8 +112,8 @@ jobs:
       id: config-matrix
       shell: bash
       run: |
-        runner_configs=$(echo ${{vars.BUILD_CONFIG}} | jq -c '[{include: .runner_configs},{config:["debug","release"]}]' )
-        build_configuration_string=${{vars.BUILD_CONFIG}}
+        runner_configs=$(echo ${{vars.BUILD_CONFIG}} | jq -c '{"include": .runner_configs,"config":["debug","release"]}' )
+        echo $runner_configs
         echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
   build-test:
@@ -124,7 +124,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.validate.outputs.matrix) }}
-    runs-on: ${{matrix.label}}
+    runs-on: ${{matrix.labels}}
     steps:
     - name: test-matrix
       shell: bash
