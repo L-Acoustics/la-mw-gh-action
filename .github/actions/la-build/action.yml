@@ -68,14 +68,24 @@ runs:
         if [ ${{inputs.include_nuget_la_feed_url}} = 'true' ];then
           dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name la_feed "${{env.NUGET_LA_FEED_URL}}"
         fi
-        arch_arg=$([ ${{env.RUNNER_ARCH}} = "universal" ] && echo "-all-archs" || "-arch ${{env.RUNNER_ARCH}}")
-        ./gen_cmake.sh -o ${{env.BUILD_DIRECTORY}} -${{inputs.CONFIG}} -c Ninja -build-csharp $arch_arg -- \
+
+        if [[ ${{env.RUNNER_ARCH}} == "universal" ]];then
+        ./gen_cmake.sh -o ${{env.BUILD_DIRECTORY}} -${{inputs.CONFIG}} -c Ninja -build-csharp -all-archs -- \
           "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
           "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
           "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
           "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
           "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
           "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
+        else
+        ./gen_cmake.sh -o ${{env.BUILD_DIRECTORY}} -${{inputs.CONFIG}} -c Ninja -build-csharp -arch ${{env.RUNNER_ARCH}} -- \
+        "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
+        "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
+        "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
+        "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
+        "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
+        "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
+        fi
 
     - name: Build
       shell: bash
