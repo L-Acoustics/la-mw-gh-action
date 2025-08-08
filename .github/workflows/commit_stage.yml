@@ -37,6 +37,7 @@ env:
   RUNNER_LABELS_MACOS: ${{ vars.RUNNER_LABELS_MACOS }}
   RUNNER_LABELS_WINDOWS: ${{ vars.RUNNER_LABELS_WINDOWS }}
   RUNNER_LABELS_LINUX: ${{ vars.RUNNER_LABELS_LINUX }}
+  RUNNER_LABELS_LINUX_ARM64: ${{ vars.RUNNER_LABELS_LINUX_ARM64 }}
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -49,7 +50,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Correct secrets and repository variables
         run: |
-          required_vars=("BUILD_DIR" "MACOS_SIGNING_IDENTITY" "BUILD_WINDOWS" "BUILD_MACOS" "BUILD_LINUX" "RELEASE_MACOS" "RELEASE_WINDOWS" "RELEASE_LINUX" "GTEST_FILTER" "LIB_NAME" "RUNNER_LABELS_MACOS" "RUNNER_LABELS_WINDOWS" "RUNNER_LABELS_LINUX")
+          required_vars=("BUILD_DIR" "MACOS_SIGNING_IDENTITY" "BUILD_WINDOWS" "BUILD_MACOS" "BUILD_LINUX" "RELEASE_MACOS" "RELEASE_WINDOWS" "RELEASE_LINUX" "GTEST_FILTER" "LIB_NAME" "RUNNER_LABELS_MACOS" "RUNNER_LABELS_WINDOWS" "RUNNER_LABELS_LINUX" "RUNNER_LABELS_LINUX_ARM64")
           required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
 
           printf "Checking required vars..."
@@ -113,12 +114,14 @@ jobs:
       run: |
         macos=$([ ${{vars.BUILD_MACOS}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_MACOS}}' '$r' || echo '""')
         echo $macos
+        linux_arm64=$([ ${{vars.BUILD_LINUX}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX_ARM64}}' '$r' || echo '""')
+        echo $linux_arm64
         linux=$([ ${{vars.BUILD_LINUX}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX}}' '$r' || echo '""')
         echo $linux
         windows=$([ ${{vars.BUILD_WINDOWS}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_WINDOWS}}' '$r' || echo '""')
         echo $windows
 
-        runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson w "$windows" '[$m,$l,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
+        runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson larm "$linux_arm64" --argjson w "$windows" '[$m,$l,$larm,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
         echo $runners
         if [ $runners = "[]" ]; then
           echo "No platform selected, set one of repository variable BUILD_{OS} to 'true'"

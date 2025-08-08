@@ -54,6 +54,7 @@ env:
   RUNNER_LABELS_MACOS: ${{ vars.RUNNER_LABELS_MACOS }}
   RUNNER_LABELS_WINDOWS: ${{ vars.RUNNER_LABELS_WINDOWS }}
   RUNNER_LABELS_LINUX: ${{ vars.RUNNER_LABELS_LINUX }}
+  RUNNER_LABELS_LINUX_ARM64: ${{ vars.RUNNER_LABELS_LINUX_ARM64 }}
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -64,7 +65,7 @@ jobs:
     steps:
       - name: Correct secrets and repository variables
         run: |
-          required_vars=("BUILD_DIR" "MACOS_SIGNING_IDENTITY" "BUILD_WINDOWS" "BUILD_MACOS" "BUILD_LINUX" "RELEASE_MACOS" "RELEASE_WINDOWS" "RELEASE_LINUX" "GTEST_FILTER" "LIB_NAME" "RUNNER_LABELS_MACOS" "RUNNER_LABELS_WINDOWS" "RUNNER_LABELS_LINUX" "NUGET_PUBLISH_FEED_URL" "INCLUDE_NUGET_LA_FEED")
+          required_vars=("BUILD_DIR" "MACOS_SIGNING_IDENTITY" "BUILD_WINDOWS" "BUILD_MACOS" "BUILD_LINUX" "RELEASE_MACOS" "RELEASE_WINDOWS" "RELEASE_LINUX" "GTEST_FILTER" "LIB_NAME" "RUNNER_LABELS_MACOS" "RUNNER_LABELS_WINDOWS" "RUNNER_LABELS_LINUX" "NUGET_PUBLISH_FEED_URL" "INCLUDE_NUGET_LA_FEED" "RUNNER_LABELS_LINUX_ARM64")
           required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
 
           printf "Checking required vars..."
@@ -126,12 +127,14 @@ jobs:
       run: |
         macos=$(([ ${{vars.RELEASE_MACOS}} = "true"  ] || [ ${{inputs.RELEASE_MACOS}} = "true" ]) && jq -n --argjson r '${{vars.RUNNER_LABELS_MACOS}}' '$r' || echo '""')
         echo $macos
+        linux_arm64=$(([ ${{vars.RELEASE_LINUX}} = "true"  ] || [ ${{inputs.RELEASE_LINUX}} = "true" ]) && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX_ARM64}}' '$r' || echo '""')
+        echo $linux_arm64
         linux=$(([ ${{vars.RELEASE_LINUX}} = "true"  ] || [ ${{inputs.RELEASE_LINUX}} = "true" ]) && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX}}' '$r' || echo '""')
         echo $linux
         windows=$(([ ${{vars.RELEASE_WINDOWS}} = "true"  ] || [ ${{inputs.RELEASE_WINDOWS}} = "true" ]) && jq -n --argjson r '${{vars.RUNNER_LABELS_WINDOWS}}' '$r' || echo '""')
         echo $windows
 
-        runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson w "$windows" '[$m,$l,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
+        runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson larm "$linux_arm64" --argjson w "$windows" '[$m,$l,$larm,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
         echo $runners
         if [ $runners = "[]" ]; then
           echo "No platform selected, either set one of repository variable RELEASE_{OS} to 'true' or use the manual workflow trigger and select at least one platform."
