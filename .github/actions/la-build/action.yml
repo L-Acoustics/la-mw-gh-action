@@ -29,6 +29,9 @@ inputs:
   NUGET_LA_FEED_URL:
     description: "The L-Acoustics nuget feed url"
     default: https://nuget.pkg.github.com/L-Acoustics/index.json
+  RUNNER_ARCH:
+    description: "The output requested architecture"
+    default: "x64"
   GITHUB_TOKEN:
     description: "The github token used to push package"
 
@@ -50,11 +53,12 @@ runs:
       shell: bash
       run: |
         echo "RUNNER_OS=${{runner.os}}" >> $GITHUB_ENV
-        echo "RUNNER_ARCH=${{runner.arch}}" >> $GITHUB_ENV
+        echo "RUNNER_ARCH=${{inputs.RUNNER_ARCH}}" >> $GITHUB_ENV
         echo "NUGET_PUBLISH_FEED_URL=${{inputs.NUGET_PUBLISH_FEED_URL}}" >> $GITHUB_ENV
         echo "NUGET_LA_FEED_URL=${{inputs.NUGET_LA_FEED_URL}}" >> $GITHUB_ENV
         echo "LIB_NAME=${{inputs.LIB_NAME}}" >> $GITHUB_ENV
         echo "GITHUB_TOKEN=${{inputs.GITHUB_TOKEN}}" >> $GITHUB_ENV
+        echo "BUILD_DIRECTORY=${{inputs.BUILD_DIR}}_${{inputs.RUNNER_ARCH}}" >> $GITHUB_ENV
 
     - name: Generate Cmake
       shell: bash
@@ -64,68 +68,24 @@ runs:
         if [ ${{inputs.include_nuget_la_feed_url}} = 'true' ];then
           dotnet nuget add source --username "${{github.repository_owner}}" --password ${{env.GITHUB_TOKEN}} --store-password-in-clear-text --name la_feed "${{env.NUGET_LA_FEED_URL}}"
         fi
-        arch=$([ ${{runner.arch}} = "X64" ] && echo "x64" || echo "arm64")
-        macos_arch_arguments=( "-all-archs" "-arch x64" "-arch arm64" )
-        if [ ${{runner.os}} = "macOS" ];then
-          for arch_arg in "${macos_arch_arguments[@]}"
-          do
-            # build_dir=$(([ $arch_arg = "-all-archs" ] && echo "${{inputs.BUILD_DIR}}_universal") || ([ $arch_arg = "-arch x64" ] && echo "${{inputs.BUILD_DIR}}_x64") || echo "${{inputs.BUILD_DIR}}_arm64" )
-            build_dir="${{inputs.BUILD_DIR}}_universal"
-            if [[ $arch_arg == '-arch x64' ]];then
-              build_dir="${{inputs.BUILD_DIR}}_x64"
-            elif [[ $arch_arg == '-arch arm64' ]]; then
-              build_dir="${{inputs.BUILD_DIR}}_arm64"
-            fi
-            echo "build_dir: $build_dir ; arch_arg: $arch_arg"
-            ./gen_cmake.sh -o $build_dir -${{inputs.CONFIG}} -c Ninja -build-csharp $arch_arg -id "${{inputs.MACOS_SIGNING_IDENTITY}}" -- \
-            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
-            "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
-            "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
-            "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
-            "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
-            "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
-          done
-        else
-          ./gen_cmake.sh -o ${{inputs.BUILD_DIR}} -${{inputs.CONFIG}} -c Ninja -build-csharp -arch $arch -- \
-            "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
-            "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
-            "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
-            "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
-            "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
-            "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
-        fi
+        arch_arg=$([ ${{env.RUNNER_ARCH}} = "universal" ] && echo "-all-archs" || "-arch ${{env.RUNNER_ARCH}}")
+        ./gen_cmake.sh -o ${{env.BUILD_DIRECTORY}} -${{inputs.CONFIG}} -c Ninja -build-csharp $arch_arg -- \
+          "-DNUGET_PUBLISH_SOURCE_URL=${{env.NUGET_PUBLISH_FEED_URL}}" \
+          "-DNUGET_PUBLISH_API_KEY=${{env.GITHUB_TOKEN}}" \
+          "-DSWIG_DIR=${{inputs.SWIG_DIR}}" \
+          "-DCU_REPO_URL=https://github.com/${{github.repository}}" \
+          "-DSWIG_EXECUTABLE=${{inputs.SWIG_EXEC}}" \
+          "-DBUILD_ATDECC_AUTOMATION_EXAMPLES=FALSE"
 
     - name: Build
       shell: bash
       run: |
-        if [ ${{runner.os}} = "macOS" ];then
-          build_dirs=("${{inputs.BUILD_DIR}}_universal" "${{inputs.BUILD_DIR}}_arm64" "${{inputs.BUILD_DIR}}_x64" )
-          for build_dir in "${build_dirs[@]}"
-          do
-            cmake --build $build_dir --target Tests
-          done
-        exit 0
-        fi
-        cmake --build ${{inputs.BUILD_DIR}} --target Tests
+        cmake --build ${{inputs.BUILD_DIR}}_${{env.RUNNER_ARCH}} --target Tests
 
     - name: Test
       shell: bash
       run: |
-        if [ ${{runner.os}} = "macOS" ];then
-          build_dirs=("${{inputs.BUILD_DIR}}_universal" "${{inputs.BUILD_DIR}}_arm64" "${{inputs.BUILD_DIR}}_x64" )
-          for build_dir in "${build_dirs[@]}"
-          do
-            cd ${{github.workspace}}
-            cd $build_dir/tests/src
-            test_cmd="./Tests --gtest_filter=${{inputs.GTEST_FILTER}}"
-            if [ "${{matrix.config}}" = "debug" ]; then
-              test_cmd="./Tests-d --gtest_filter=${{inputs.GTEST_FILTER}}"
-            fi
-            eval $test_cmd
-          done
-        exit 0
-        fi
-        cd ${{inputs.BUILD_DIR}}/tests/src
+        cd ${{env.BUILD_DIRECTORY}}/tests/src
         test_cmd="./Tests --gtest_filter=${{inputs.GTEST_FILTER}}"
         if [ "${{matrix.config}}" = "debug" ]; then
           test_cmd="./Tests-d --gtest_filter=${{inputs.GTEST_FILTER}}"
@@ -135,32 +95,11 @@ runs:
     - name: Build all
       shell: bash
       run: |
-        # For macos universal,x64 & arm
-        if [ ${{runner.os}} = "macOS" ];then
-          build_dirs=("${{inputs.BUILD_DIR}}_universal" "${{inputs.BUILD_DIR}}_arm64" "${{inputs.BUILD_DIR}}_x64" )
-          for build_dir in "${build_dirs[@]}"
-          do
-            cmake --build $build_dir
-          done
-        exit 0
-        fi
-        # For other platforms
-        cmake --build ${{inputs.BUILD_DIR}}
+        cmake --build ${{env.BUILD_DIRECTORY}}
 
     - name: Push bindings
       if: inputs.push_bindings == 'true'
       shell: bash
       run: |
-        # For macos universal,x64 & arm
-        if [ ${{runner.os}} = "macOS" ];then
-          build_dirs=("${{inputs.BUILD_DIR}}_universal" "${{inputs.BUILD_DIR}}_arm64" "${{inputs.BUILD_DIR}}_x64" )
-          for build_dir in "${build_dirs[@]}"
-          do
-            cmake --build $build_dir --target ${{env.LIB_NAME}}-csharp-nuget-push
-          done
-        exit 0
-        fi
-
-        # For other platforms
-        cmake --build ${{inputs.BUILD_DIR}} --target ${{env.LIB_NAME}}-csharp-nuget-push
+        cmake --build ${{env.BUILD_DIRECTORY}} --target ${{env.LIB_NAME}}-csharp-nuget-push
 
