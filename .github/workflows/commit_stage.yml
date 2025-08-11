@@ -36,6 +36,8 @@ jobs:
       GTEST_FILTER: ${{ steps.set-config.outputs.GTEST_FILTER }}
       INCLUDE_NUGET_LA_FEED: ${{ steps.set-config.outputs.INCLUDE_NUGET_LA_FEED }}
       NUGET_PUBLISH_FEED_URL: ${{ steps.set-config.outputs.NUGET_PUBLISH_FEED_URL }}
+      WINPCAP_ROOT_DESTINATION: ${{ steps.set-config.outputs.WINPCAP_ROOT_DESTINATION }}
+      ALTERNATIVE_BASHUTILS_PATH: ${{ steps.set-config.outputs.ALTERNATIVE_BASHUTILS_PATH }}
 
     steps:
       - uses: actions/checkout@v2
@@ -62,24 +64,21 @@ jobs:
           echo "LIB_NAME=$lib_name" >> $GITHUB_OUTPUT
           echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
 
-          # # Optional variables
-          build_dir=$(echo $string | jq -c -e '.build_directory' > /dev/null || echo "")
-          build_dir=${build_dir:-'_build'}
-
-          gtest_filter=$(echo $string | jq -c -e '.gtest_filter' > /dev/null || echo "")
-          gtest_filter=${gtest_filter:-'*'}
-
-          include_nuget_la_feed=$(echo $string | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "")
-          include_nuget_la_feed=${include_nuget_la_feed:-'false'}
-
-          nuget_publish_feed_url=$(echo $string | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "")
-          nuget_publish_feed_url=${nuget_publish_feed_url:-'https://nuget.pkg.github.com/${{github.repository_owner}}/index.json'}
+          # # Optional variables using jq and echo-ing the fallback value if any errors during parsing.
+          bashutils_dir=$(echo $string | jq -c -e '.alternative_bashutils_path' > /dev/null || echo ".")
+          winpcap_dir=$(echo $string | jq -c -e '.winpcap_destination_root' > /dev/null || echo ".")
+          build_dir=$(echo $string | jq -c -e '.build_directory' > /dev/null || echo "_build")
+          gtest_filter=$(echo $string | jq -c -e '.gtest_filter' > /dev/null || echo "*")
+          include_nuget_la_feed=$(echo $string | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "false")
+          nuget_publish_feed_url=$(echo $string | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json")
 
           # Writting output so that it is available to sub-sequent jobs
           echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
           echo "INCLUDE_NUGET_LA_FEED=$include_nuget_la_feed" >> $GITHUB_OUTPUT
           echo "NUGET_PUBLISH_FEED_URL=$nuget_publish_feed_url" >> $GITHUB_OUTPUT
           echo "BUILD_DIR=$build_dir" >> $GITHUB_OUTPUT
+          echo "WINPCAP_ROOT_DESTINATION=$winpcap_dir" >> $GITHUB_OUTPUT
+          echo "ALTERNATIVE_BASHUTILS_PATH=$bashutils_dir" >> $GITHUB_OUTPUT
 
       - name: Correct secrets and repository variables
         id: config-matrix
@@ -130,7 +129,7 @@ jobs:
     - name: Run fix_files
       shell: bash {0}
       run: |
-        alternative_bashutils_path=${{inputs.ALTERNATIVE_BASHUTILS_PATH}}
+        alternative_bashutils_path=${{needs.pre-workflow-checks.outputs.ALTERNATIVE_BASHUTILS_PATH}}
         $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
 
     - name: Check for changes
