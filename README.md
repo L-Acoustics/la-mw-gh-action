@@ -69,8 +69,27 @@ The schema of the json object is shown bellow:
         "additionalProperties": false
       }
     },
+    "gtest_filter": {
+      "type": "string"
+    },
+    "macos_signing_identity":{
+      "type": "string"
+    },
+    "package_name":{
+      "type": "string"
+    },
+    "include_nuget_la_feed":{
+      "type": "string",
+      "enum": ["true","false"]
+    },
+    "nuget_publish_feed_url":{
+      "type": "string"
+    },
+    "build_directory": {
+      type: "string"
+    },
   },
-  "required": ["runner_configs"],
+  "required": ["runner_configs", "macos_signing_identity", "package_name"],
   "additionalProperties": false
 }
 ```
@@ -102,6 +121,8 @@ An example of a configuration:
       "labels": "windows-2022",
       "arch": "x64"
     }
+    "gtest_filter":"-MYTESTS*",
+    "macos_signing_identity":"COM_COMPANY (QABCD123)",
   ]
 }
 ```
