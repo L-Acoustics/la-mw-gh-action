@@ -41,37 +41,37 @@ The build configuration is done through a json string read within the workflow. 
 The schema of the json object is shown bellow:
 ```json
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "type": "object",
-    "properties": {
-        "runner_configs": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "runner_configs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
 
-                    "labels": {
-                        "oneOf": [
-                            { "type": "string" },
-                            {
-                                "type": "array",
-                                "items": { "type": "string" },
-                                "minItems": 1
-                            }
-                        ]
-                    },
-                    "arch": {
-                        "type": "string",
-                        "enum": ["x64", "arm64", "universal"]
-                    }
-                },
-                "required": ["labels", "arch"],
-                "additionalProperties": false
-            }
+          "labels": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1
+              }
+            ]
+          },
+          "arch": {
+            "type": "string",
+            "enum": ["x64", "arm64", "universal"]
+          }
         },
+        "required": ["labels", "arch"],
+        "additionalProperties": false
+      }
     },
-    "required": ["runner_configs"],
-    "additionalProperties": false
+  },
+  "required": ["runner_configs"],
+  "additionalProperties": false
 }
 ```
 An example of a configuration:
