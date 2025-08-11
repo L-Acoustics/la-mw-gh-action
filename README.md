@@ -14,27 +14,27 @@ Each workflow can be integrated into a repository using the following templates:
 - [commit_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/commit_stage.yml)
 - [release_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/release_stage.yml)
 
-The `commit_stage` workflow supports the following inputs and secrets:
+The `commit_stage` workflow supports the following configuration parameters and secrets:
 
 |name|default|description|
 |----|----------|-----------|
 |KEYCHAIN_PASSWORD|_required_|*SECRETS* The password for the created macos keychain|
 |APPLE_CERTIFICATES_P12_BASE64_PASSWORD|_required_|*SECRETS* The certificate password required to install it in the keychain|
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
-|WINPCAP_ROOT_DESTINATION|"." (current folder)| The folder to which the winpcap expected path will be appended. i.e. `${{inputs.WINPCAP_ROOT_DESTINATION}}/externals/3rdparty/winpcap` |
-|ALTERNATIVE_BASHUTILS_PATH|"." (current folder)| The folder to which the bashUtils expected path will be appended. i.e. `${{inputs.ALTERNATIVE_BASHUTILS_PATH}}/scripts/bashUtils` |
+|winpcap_destination_root|"." (current folder)| The folder to which the winpcap expected path will be appended. i.e. `$winpcap_destination_root/externals/3rdparty/winpcap` |
+|alternative_bashutils_path|"." (current folder)| The folder to which the bashUtils expected path will be appended. i.e. `$alternative_bashutils_path/scripts/bashUtils` |
 
 In addition the `commit_stage` and `release_stage` workflows use the following repository secrets and variables, the variable marked as _required_ will make the job fail if empty. (How to set repository variables and secrets)
 
 |name|default|description|
 |----|-------|-----------|
 |BUILD_CONFIG                   |_required_|The json string representing the build configuration cf "Build configuration settings"|
-|LIB_NAME                   |_required_|The name of the library to push the csharp bindings 'la_avdecc_controller'|
-|GTEST_FILTER               |_required_|The GTEST filter value '-INTEGRATION*'|
-|MACOS_SIGNING_IDENTITY     |_required_|The signing identity to use during macos signing "MY_COMPANY (MY_TEAM_ID)"|
-|BUILD_DIR                  |'_build'|The build directory used to generate build files|
-|NUGET_PUBLISH_FEED_URL     |'https://nuget.pkg.github.com/$REPO_OWNER/index.json'|The feed url to publish the nuget package|
-|INCLUDE_NUGET_LA_FEED      |'false'|Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
+|package_name                   |_required_|The name of the library to push the csharp bindings 'la_avdecc_controller'|
+|gtest_filter               |'*'|The GTEST filter value '-INTEGRATION*'|
+|macos_signing_identity     |_required_|The signing identity to use during macos signing "MY_COMPANY (MY_TEAM_ID)"|
+|build_dir                  |'_build'|The build directory used to generate build files|
+|nuget_publish_feed_url     |'https://nuget.pkg.github.com/$REPO_OWNER/index.json'|The feed url to publish the nuget package|
+|include_nuget_la_feed      |'false'|Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
 
 ### Build configuration
 The build configuration is done through a json string read within the workflow. This Json string should be set as a repository variable.
@@ -120,15 +120,16 @@ An example of a configuration:
     {
       "labels": "windows-2022",
       "arch": "x64"
-    }
-    "gtest_filter":"-MYTESTS*",
-    "macos_signing_identity":"COM_COMPANY (QABCD123)",
-  ]
+   }
+  ],
+  "gtest_filter":"-MYTESTS*",
+  "macos_signing_identity":"COM_COMPANY (QABCD123)",
+  "package_name": "my_package_to_push"
 }
 ```
 As a single line string.
 ```text
-'{"runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"},{"labels":"ubuntu-22.04-arm","arch":"arm64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"arm64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"x64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"universal"},{"labels":"windows-2022","arch":"x64"}]}'
+'{"runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"},{"labels":"ubuntu-22.04-arm","arch":"arm64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"arm64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"x64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"universal"},{"labels":"windows-2022","arch":"x64"}],"gtest_filter":"-MYTESTS*","macos_signing_identity":"COM_COMPANY (QABCD123)","package_name":"my_package_to_push"}'
 ```
 
 ### How to set repository secrets and variables
