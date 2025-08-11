@@ -38,10 +38,16 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.config-matrix.outputs.matrix }}
+      LIB_NAME: ${{ steps.set-config.outputs.LIB_NAME }}
+      MACOS_SIGNING_IDENTITY: ${{ steps.set-config.outputs.MACOS_SIGNING_IDENTITY }}
+      GTEST_FILTER: ${{ steps.set-config.outputs.GTEST_FILTER }}
+      INCLUDE_NUGET_LA_FEED: ${{ steps.set-config.outputs.INCLUDE_NUGET_LA_FEED }}
+      NUGET_PUBLISH_FEED_URL: ${{ steps.set-config.outputs.NUGET_PUBLISH_FEED_URL }}
 
     steps:
       - uses: actions/checkout@v2
       - name: set environment
+        id: set-config
         shell: bash
         run: |
           # # Required variables
@@ -50,7 +56,9 @@ jobs:
           lib_name=${{vars.LIB_NAME}}
           macos_signing_identity=${{vars.MACOS_SIGNING_IDENTITY}}
           echo "BUILD_CONFIG=$build_config" >> $GITHUB_ENV
+          echo "LIB_NAME=$lib_name" >> $GITHUB_OUTPUT
           echo "LIB_NAME=$lib_name" >> $GITHUB_ENV
+          echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
           echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_ENV
 
 
@@ -65,10 +73,10 @@ jobs:
           include_nuget_la_feed=${include_nuget_la_feed:-'false'}
           nuget_publish_feed_url=${{vars.NUGET_PUBLISH_FEED_URL}}
           nuget_publish_feed_url=${nuget_publish_feed_url:-'https://nuget.pkg.github.com/${{github.repository_owner}}/index.json'}
-          echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_ENV
-          echo "INCLUDE_NUGET_LA_FEED=$include_nuget_la_feed" >> $GITHUB_ENV
-          echo "NUGET_PUBLISH_FEED_URL=$nuget_publish_feed_url" >> $GITHUB_ENV
-          echo "BUILD_DIR=$build_dir" >> $GITHUB_ENV
+          echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
+          echo "INCLUDE_NUGET_LA_FEED=$include_nuget_la_feed" >> $GITHUB_OUTPUT
+          echo "NUGET_PUBLISH_FEED_URL=$nuget_publish_feed_url" >> $GITHUB_OUTPUT
+          echo "BUILD_DIR=$build_dir" >> $GITHUB_OUTPUT
 
       - name: Correct secrets and repository variables
         id: config-matrix
@@ -86,7 +94,7 @@ jobs:
 
           echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
-          required_vars=("BUILD_CONFIG" "BUILD_DIR" "MACOS_SIGNING_IDENTITY" "GTEST_FILTER" "LIB_NAME" )
+          required_vars=("BUILD_CONFIG" "MACOS_SIGNING_IDENTITY" "LIB_NAME" )
           required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
 
           printf "Checking required vars..."
@@ -190,10 +198,10 @@ jobs:
         GTEST_FILTER: '${{vars.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
-        BUILD_DIR: "${{env.BUILD_DIR}}"
-        include_nuget_la_feed_url:  "${{env.INCLUDE_NUGET_LA_FEED}}"
+        BUILD_DIR: "${{needs.pre-workflow-checks.outputs.BUILD_DIR}}"
+        include_nuget_la_feed_url:  "${{needs.pre-workflow-checks.outputs.INCLUDE_NUGET_LA_FEED}}"
         CONFIG: ${{matrix.config}}
-        MACOS_SIGNING_IDENTITY: ${{env.MACOS_SIGNING_IDENTITY}}
-        NUGET_PUBLISH_FEED_URL: ${{env.NUGET_PUBLISH_FEED_URL}}
-        LIB_NAME: ${{env.LIB_NAME}}
+        MACOS_SIGNING_IDENTITY: ${{needs.pre-workflow-checks.outputs.MACOS_SIGNING_IDENTITY}}
+        NUGET_PUBLISH_FEED_URL: ${{needs.pre-workflow-checks.outputs.NUGET_PUBLISH_FEED_URL}}
+        LIB_NAME: ${{needs.pre-workflow-checks.outputs.LIB_NAME}}
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
