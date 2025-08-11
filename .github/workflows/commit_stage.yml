@@ -44,7 +44,9 @@ jobs:
       - name: set environment
         shell: bash
         run: |
-          echo "BUILD_CONFIG='${{vars.BUILD_CONFIG}}'" >> $GITHUB_ENV
+          # Required so that the json string is parsed correctly
+          build_config=${{vars.BUILD_CONFIG}}
+          echo "BUILD_CONFIG=$build_config" >> $GITHUB_ENV
 
       - name: Correct secrets and repository variables
         id: config-matrix
@@ -52,7 +54,7 @@ jobs:
           if [ -z "$BUILD_CONFIG" ]; then
             echo "Variable BUILD_CONFIG is not set or empty."
           fi
-          runner_configs=$(echo ${{env.BUILD_CONFIG}} | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
+          runner_configs=$(echo "$BUILD_CONFIG" | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
           configs_count=$(echo $runner_configs | jq '.include | length')
 
           if [[ $configs_count < 1 ]]; then
