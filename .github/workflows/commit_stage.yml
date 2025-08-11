@@ -28,7 +28,7 @@ env:
   MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
   GTEST_FILTER: ${{ vars.GTEST_FILTER }}
   LIB_NAME: ${{ vars.LIB_NAME }}
-  BUILD_CONFIG: ${{ vars.BUILD_CONFIG }}
+  # BUILD_CONFIG: ${{ vars.BUILD_CONFIG }}
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -36,11 +36,32 @@ env:
 jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.config-matrix.outputs.matrix }}
 
     steps:
       - uses: actions/checkout@v2
-      - name: Correct secrets and repository variables
+      - name: set environment
+        shell: bash
         run: |
+          echo "BUILD_CONFIG=${{vars.BUILD_CONFIG}}" >> $GITHUB_ENV
+
+      - name: Correct secrets and repository variables
+        id: config-matrix
+        run: |
+          if [ -z "$BUILD_CONFIG" ]; then
+            echo "Variable BUILD_CONFIG is not set or empty."
+          fi
+          runner_configs=$(echo ${{env.BUILD_CONFIG}} | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
+          configs_count=$(echo $runner_configs | jq '.include | length')
+
+          if [[ configs_count < 1 ]]; then
+          echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. {"runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
+          exit 1
+          fi
+
+          echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
+
           required_vars=("BUILD_CONFIG" "BUILD_DIR" "MACOS_SIGNING_IDENTITY" "GTEST_FILTER" "LIB_NAME" )
           required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
 
@@ -69,11 +90,10 @@ jobs:
           exit $continue
 
 
+
   validate:
     needs: pre-workflow-checks
     runs-on: windows-2022
-    outputs:
-      matrix: ${{ steps.config-matrix.outputs.matrix }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -99,22 +119,17 @@ jobs:
           echo "Some files need formatting/fixing. Please run the script and commit the changes."
           exit 1
         fi
-    - name: prepare-runners-matrix
-      id: config-matrix
-      shell: bash
-      run: |
-        runner_configs=$(echo ${{vars.BUILD_CONFIG}} | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
-        echo $runner_configs
-        echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
   build-test:
-    needs: validate
+    needs:
+      - validate
+      - pre-workflow-checks
     env:
       LC_ALL: en_US.UTF-8
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.validate.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.pre-workflow-checks.outputs.matrix) }}
     runs-on: ${{matrix.labels}}
     name: Build-test (${{matrix.config}}, ${{matrix.labels}}, ${{matrix.arch}})
     steps:
