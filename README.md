@@ -14,29 +14,42 @@ Each workflow can be integrated into a repository using the following templates:
 - [commit_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/commit_stage.yml)
 - [release_stage.yml](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/release_stage.yml)
 
-The `commit_stage` workflow supports the following configuration parameters and secrets:
+The workflow configuration is done with JSON object defined in [repository action variables](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#defining-configuration-variables-for-multiple-workflows) and [repository secrets](https://docs.github.com/en/actions/concepts/security/secrets?versionId=free-pro-team%40latest&productId=actions) .
+### Repository variables and secrets
+The **required secrets** are :
 
 |name|default|description|
 |----|----------|-----------|
 |KEYCHAIN_PASSWORD|_required_|*SECRETS* The password for the created macos keychain|
 |APPLE_CERTIFICATES_P12_BASE64_PASSWORD|_required_|*SECRETS* The certificate password required to install it in the keychain|
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
-|winpcap_destination_root|"." (current folder)| The folder to which the winpcap expected path will be appended. i.e. `$winpcap_destination_root/externals/3rdparty/winpcap` |
-|alternative_bashutils_path|"." (current folder)| The folder to which the bashUtils expected path will be appended. i.e. `$alternative_bashutils_path/scripts/bashUtils` |
 
-In addition the `commit_stage` and `release_stage` workflows use the following repository secrets and variables, the variable marked as _required_ will make the job fail if empty. (How to set repository variables and secrets)
-
+The **required variables** are:
 |name|default|description|
 |----|-------|-----------|
 |BUILD_CONFIG                   |_required_|The json string representing the build configuration cf "Build configuration settings"|
-|package_name                   |_required_|The name of the library to push the csharp bindings 'la_avdecc_controller'|
-|gtest_filter               |'*'|The GTEST filter value '-INTEGRATION*'|
-|macos_signing_identity     |_required_|The signing identity to use during macos signing "MY_COMPANY (MY_TEAM_ID)"|
-|build_dir                  |'_build'|The build directory used to generate build files|
-|nuget_publish_feed_url     |'https://nuget.pkg.github.com/$REPO_OWNER/index.json'|The feed url to publish the nuget package|
-|include_nuget_la_feed      |'false'|Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
 
-### Build configuration
+### Workflow configuration (json):
+The **required parameters** are:
+(cf build configuration schema for details)
+
+|key|default|description|
+|----|----------|-----------|
+|runner_configs             |_required |The array containing the runner configuration to use.                           |
+|macos_signing_identity     |_required_|The signing identity to use during macos signing e.g. "MY_COMPANY (MY_TEAM_ID)" |
+|package_name               |_required_|The name of the package that will be pushed e.g. 'my_avdecc_controller'         |
+
+The **optional parameters** are:
+|name|default|description|
+|----|-------|-----------|
+|gtest_filter               |'*'                                                    |The GTEST filter value '-INTEGRATION*'|
+|build_dir                  |'_build'                                               |The build directory used to generate build files|
+|nuget_publish_feed_url     |'https://nuget.pkg.github.com/$REPO_OWNER/index.json'  |The feed url to publish the nuget package|
+|include_nuget_la_feed      |'false'                                                |Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
+|winpcap_destination_root|"." (current folder)                                      | The folder to which the winpcap expected path will be appended. i.e. `$winpcap_destination_root/externals/3rdparty/winpcap` |
+|alternative_bashutils_path|"." (current folder)                                    | The folder to which the bashUtils expected path will be appended. i.e. `$alternative_bashutils_path/scripts/bashUtils` |
+
+### Build schema
 The build configuration is done through a json string read within the workflow. This Json string should be set as a repository variable.
 The schema of the json object is shown bellow:
 ```json
