@@ -53,14 +53,21 @@ jobs:
           # # Required variables
           # Required so that the json string is parsed correctly
           build_config=${{vars.BUILD_CONFIG}}
-          lib_name=${{vars.LIB_NAME}}
-          macos_signing_identity=${{vars.MACOS_SIGNING_IDENTITY}}
           echo "BUILD_CONFIG=$build_config" >> $GITHUB_ENV
-          echo "LIB_NAME=$lib_name" >> $GITHUB_OUTPUT
-          echo "LIB_NAME=$lib_name" >> $GITHUB_ENV
-          echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
-          echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_ENV
 
+          required_variables=('"package_name"' '"macos_signing_identity"' '"runner_configs"')
+          continue=0
+          for var in "${required_variables[@]}"; do
+              echo $build_config | jq --argjson k "$var" -e 'has($k) and .k != ""' > /dev/null || (echo "Configuration parameter $var is missing or is empty." && continue=1)
+          done
+          if [[ $continue = 1 ]]; then
+            exit 1
+          fi
+
+          lib_name=$(echo $build_config | jq --argjson k '"package_name"' -c '.[$k]')
+          macos_signing_identity=$(echo $build_config | jq --argjson k '"macos_signing_identity"' -c '.[$k]')
+          echo "LIB_NAME=$lib_name" >> $GITHUB_OUTPUT
+          echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
 
           # # Optional variables
           build_dir=${{vars.BUILD_DIR}}
@@ -94,7 +101,6 @@ jobs:
 
           echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
-          required_vars=("BUILD_CONFIG" "MACOS_SIGNING_IDENTITY" "LIB_NAME" )
           required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
 
           printf "Checking required vars..."
