@@ -44,7 +44,7 @@ jobs:
       - name: set environment
         shell: bash
         run: |
-          echo "BUILD_CONFIG=${{vars.BUILD_CONFIG}}" >> $GITHUB_ENV
+          echo "BUILD_CONFIG='${{vars.BUILD_CONFIG}}'" >> $GITHUB_ENV
 
       - name: Correct secrets and repository variables
         id: config-matrix
@@ -55,7 +55,7 @@ jobs:
           runner_configs=$(echo ${{env.BUILD_CONFIG}} | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
           configs_count=$(echo $runner_configs | jq '.include | length')
 
-          if [[ configs_count < 1 ]]; then
+          if [[ $configs_count < 1 ]]; then
           echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. {"runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
           exit 1
           fi
