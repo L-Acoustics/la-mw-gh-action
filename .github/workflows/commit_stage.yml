@@ -80,7 +80,7 @@ jobs:
           echo "WINPCAP_ROOT_DESTINATION=$winpcap_dir" >> $GITHUB_OUTPUT
           echo "ALTERNATIVE_BASHUTILS_PATH=$bashutils_dir" >> $GITHUB_OUTPUT
 
-      - name: Correct secrets and repository variables
+      - name: Check secrets and set compute runners
         id: config-matrix
         run: |
           if [ -z "$BUILD_CONFIG" ]; then
@@ -90,7 +90,7 @@ jobs:
           configs_count=$(echo $runner_configs | jq '.include | length')
 
           if [[ $configs_count < 1 ]]; then
-          echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. {"runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
+          echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. "runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
           exit 1
           fi
 
