@@ -90,7 +90,7 @@ runs:
     - name: Build
       shell: bash
       run: |
-        cmake --build ${{inputs.BUILD_DIR}}_${{env.RUNNER_ARCH}} --target Tests
+        cmake --build ${{env.BUILD_DIRECTORY}} --target Tests
 
     - name: Test
       shell: bash
