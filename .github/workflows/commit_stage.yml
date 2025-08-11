@@ -22,13 +22,6 @@ permissions:
   packages: write
 
 env:
-  # INCLUDE_NUGET_LA_FEED: ${{ vars.INCLUDE_NUGET_LA_FEED || 'false' }}
-  # NUGET_PUBLISH_FEED_URL: ${{ vars.NUGET_PUBLISH_FEED_URL || format('https://nuget.pkg.github.com/{0}/index.json',github.repository_owner) }}
-  # BUILD_DIR: ${{ vars.BUILD_DIR || '_build' }}
-  # MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
-  # GTEST_FILTER: ${{ vars.GTEST_FILTER }}
-  # LIB_NAME: ${{ vars.LIB_NAME }}
-  # BUILD_CONFIG: ${{ vars.BUILD_CONFIG }}
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -70,16 +63,19 @@ jobs:
           echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
 
           # # Optional variables
-          build_dir=${{vars.BUILD_DIR}}
+          build_dir=$(echo $string | jq -c -e '.build_directory' > /dev/null || echo "")
           build_dir=${build_dir:-'_build'}
 
-          # This is required to use the value subsitution in bash as github variable are not references but value substituted i.e. empty if not set
-          gtest_filter=${{vars.GTEST_FILTER}}
+          gtest_filter=$(echo $string | jq -c -e '.gtest_filter' > /dev/null || echo "")
           gtest_filter=${gtest_filter:-'*'}
-          include_nuget_la_feed=${{vars.INCLUDE_NUGET_LA_FEED}}
+
+          include_nuget_la_feed=$(echo $string | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "")
           include_nuget_la_feed=${include_nuget_la_feed:-'false'}
-          nuget_publish_feed_url=${{vars.NUGET_PUBLISH_FEED_URL}}
+
+          nuget_publish_feed_url=$(echo $string | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "")
           nuget_publish_feed_url=${nuget_publish_feed_url:-'https://nuget.pkg.github.com/${{github.repository_owner}}/index.json'}
+
+          # Writting output so that it is available to sub-sequent jobs
           echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
           echo "INCLUDE_NUGET_LA_FEED=$include_nuget_la_feed" >> $GITHUB_OUTPUT
           echo "NUGET_PUBLISH_FEED_URL=$nuget_publish_feed_url" >> $GITHUB_OUTPUT
@@ -102,18 +98,6 @@ jobs:
           echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
 
           required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
-
-          printf "Checking required vars..."
-          continue=0
-          for var in "${required_vars[@]}"; do
-            if [ -z "${!var}" ]; then
-              continue=1
-              printf "\n❌ Variable '$var' is not set or is empty."
-            fi
-          done
-          if [ $continue = 0 ];then
-            printf "ok.\n"
-          fi
 
           printf "\nChecking required secrets..."
           for secret in "${required_secrets[@]}"; do
