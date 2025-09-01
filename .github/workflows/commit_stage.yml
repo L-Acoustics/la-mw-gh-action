@@ -155,13 +155,13 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.pre-workflow-checks.outputs.matrix) }}
     runs-on: ${{matrix.labels}}
-    name: Build-test (${{matrix.config}}, ${{matrix.labels}}, ${{matrix.arch}})
+    name: Build-test (${{matrix.config}}, ${{runner.os}}, ${{matrix.arch}})
     steps:
     - name: test-matrix
       shell: bash
       run: |
         echo "Matrix values"
-        echo "${{matrix.labels}}"
+        echo ${{matrix.labels}}
         echo "${{matrix.arch}}"
 
     - uses: actions/checkout@v2
