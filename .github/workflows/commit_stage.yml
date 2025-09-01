@@ -69,7 +69,10 @@ jobs:
           bashutils_dir=$(echo $build_config | jq -c -e '.alternative_bashutils_path' > /dev/null || echo ".")
           winpcap_dir=$(echo $build_config | jq -c -e '.winpcap_destination_root' > /dev/null || echo ".")
           build_dir=$(echo $build_config | jq -c -e '.build_directory' > /dev/null || echo "_build")
+          set -f # This in order to avoid filename expension during parsing of wildcard
           gtest_filter=$(echo $build_config | jq -c -e '.gtest_filter' > /dev/null || echo "*")
+          echo $gtest_filter
+          set +f
           include_nuget_la_feed=$(echo $build_config | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "false")
           nuget_publish_feed_url=$(echo $build_config | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json")
 
