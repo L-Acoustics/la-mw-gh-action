@@ -66,15 +66,12 @@ jobs:
           echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
 
           # # Optional variables using jq and echo-ing the fallback value if any errors during parsing.
-          bashutils_dir=$(echo $build_config | jq -c -e '.alternative_bashutils_path' > /dev/null || echo ".")
-          winpcap_dir=$(echo $build_config | jq -c -e '.winpcap_destination_root' > /dev/null || echo ".")
-          build_dir=$(echo $build_config | jq -c -e '.build_directory' > /dev/null || echo "_build")
-          set -f # This in order to avoid filename expension during parsing of wildcard
-          gtest_filter=$(echo $build_config | jq -c -e '.gtest_filter' > /dev/null || echo "*")
-          echo $gtest_filter
-          set +f
-          include_nuget_la_feed=$(echo $build_config | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "false")
-          nuget_publish_feed_url=$(echo $build_config | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json")
+          bashutils_dir=$(echo "$build_config" | jq -c -e 'if has("alternative_bashutils_path") then .alternative_bashutils_path else "." end')
+          winpcap_dir=$(echo "$build_config" | jq -c -e 'if has("winpcap_destination_root") then .winpcap_destination_root else "." end')
+          build_dir=$(echo "$build_config" | jq -c -e 'if has("build_directory") then .build_directory else "_build" end')
+          gtest_filter=$(echo "$build_config" | jq -c -e 'if has("gtest_filter") then .gtest_filter else "*" end')
+          include_nuget_la_feed=$(echo "$build_config" | jq -c -e 'if has("include_nuget_la_feed") then .include_nuget_la_feed else "false" end')
+          nuget_publish_feed_url=$(echo "$build_config" | jq -c -e 'if has("nuget_publish_feed_url") then .nuget_publish_feed_url else "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json" end')
 
           # Writting output so that it is available to sub-sequent jobs
           echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
