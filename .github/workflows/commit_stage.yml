@@ -59,18 +59,19 @@ jobs:
             exit 1
           fi
 
-          lib_name=$(echo $build_config | jq --argjson k '"package_name"' -c '.[$k]')
-          macos_signing_identity=$(echo $build_config | jq --argjson k '"macos_signing_identity"' -c '.[$k]')
+          # Parse json string -c for compact output and -e for setting exit code
+          lib_name=$(echo $build_config | jq -e -c '.package_name')
+          macos_signing_identity=$(echo $build_config | jq -e -c '.macos_signing_identity')
           echo "LIB_NAME=$lib_name" >> $GITHUB_OUTPUT
           echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
 
           # # Optional variables using jq and echo-ing the fallback value if any errors during parsing.
-          bashutils_dir=$(echo $string | jq -c -e '.alternative_bashutils_path' > /dev/null || echo ".")
-          winpcap_dir=$(echo $string | jq -c -e '.winpcap_destination_root' > /dev/null || echo ".")
-          build_dir=$(echo $string | jq -c -e '.build_directory' > /dev/null || echo "_build")
-          gtest_filter=$(echo $string | jq -c -e '.gtest_filter' > /dev/null || echo "*")
-          include_nuget_la_feed=$(echo $string | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "false")
-          nuget_publish_feed_url=$(echo $string | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json")
+          bashutils_dir=$(echo $build_config | jq -c -e '.alternative_bashutils_path' > /dev/null || echo ".")
+          winpcap_dir=$(echo $build_config | jq -c -e '.winpcap_destination_root' > /dev/null || echo ".")
+          build_dir=$(echo $build_config | jq -c -e '.build_directory' > /dev/null || echo "_build")
+          gtest_filter=$(echo $build_config | jq -c -e '.gtest_filter' > /dev/null || echo "*")
+          include_nuget_la_feed=$(echo $build_config | jq -c -e '.include_nuget_la_feed' > /dev/null || echo "false")
+          nuget_publish_feed_url=$(echo $build_config | jq -c -e '.nuget_publish_feed_url' > /dev/null || echo "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json")
 
           # Writting output so that it is available to sub-sequent jobs
           echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
@@ -79,6 +80,7 @@ jobs:
           echo "BUILD_DIR=$build_dir" >> $GITHUB_OUTPUT
           echo "WINPCAP_ROOT_DESTINATION=$winpcap_dir" >> $GITHUB_OUTPUT
           echo "ALTERNATIVE_BASHUTILS_PATH=$bashutils_dir" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: Check secrets and set compute runners
         id: config-matrix
@@ -90,8 +92,8 @@ jobs:
           configs_count=$(echo $runner_configs | jq '.include | length')
 
           if [[ $configs_count < 1 ]]; then
-          echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. "runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
-          exit 1
+            echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. "runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
+            exit 1
           fi
 
           echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
@@ -174,7 +176,7 @@ jobs:
     - name: Configure runner
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
       with:
-        WINPCAP_ROOT_DESTINATION: ${{inputs.WINPCAP_ROOT_DESTINATION}}
+        WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
         APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
         KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
@@ -185,7 +187,7 @@ jobs:
       with:
         push_bindings: 'false'
         RUNNER_ARCH: ${{matrix.arch}}
-        GTEST_FILTER: '${{vars.GTEST_FILTER}}'
+        GTEST_FILTER: '${{needs.pre-workflow-checks.outputs.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
         BUILD_DIR: "${{needs.pre-workflow-checks.outputs.BUILD_DIR}}"
