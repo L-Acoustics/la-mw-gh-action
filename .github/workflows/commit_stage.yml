@@ -22,22 +22,6 @@ permissions:
   packages: write
 
 env:
-  INCLUDE_NUGET_LA_FEED: ${{ vars.INCLUDE_NUGET_LA_FEED || 'false' }}
-  NUGET_PUBLISH_FEED_URL: ${{ vars.NUGET_PUBLISH_FEED_URL || format('https://nuget.pkg.github.com/{0}/index.json',github.repository_owner) }}
-  BUILD_DIR: ${{ vars.BUILD_DIR || '_build' }}
-  MACOS_SIGNING_IDENTITY: ${{ vars.MACOS_SIGNING_IDENTITY }}
-  BUILD_WINDOWS: ${{ vars.BUILD_WINDOWS }}
-  BUILD_MACOS: ${{ vars.BUILD_MACOS }}
-  BUILD_LINUX: ${{ vars.BUILD_LINUX }}
-  RELEASE_MACOS: ${{ vars.RELEASE_MACOS }}
-  RELEASE_WINDOWS: ${{ vars.RELEASE_WINDOWS }}
-  RELEASE_LINUX: ${{ vars.RELEASE_LINUX }}
-  GTEST_FILTER: ${{ vars.GTEST_FILTER }}
-  LIB_NAME: ${{ vars.LIB_NAME }}
-  RUNNER_LABELS_MACOS: ${{ vars.RUNNER_LABELS_MACOS }}
-  RUNNER_LABELS_WINDOWS: ${{ vars.RUNNER_LABELS_WINDOWS }}
-  RUNNER_LABELS_LINUX: ${{ vars.RUNNER_LABELS_LINUX }}
-  RUNNER_LABELS_LINUX_ARM64: ${{ vars.RUNNER_LABELS_LINUX_ARM64 }} || 'ubuntu-22.04-arm'
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
@@ -45,26 +29,78 @@ env:
 jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.config-matrix.outputs.matrix }}
+      LIB_NAME: ${{ steps.set-config.outputs.LIB_NAME }}
+      MACOS_SIGNING_IDENTITY: ${{ steps.set-config.outputs.MACOS_SIGNING_IDENTITY }}
+      GTEST_FILTER: ${{ steps.set-config.outputs.GTEST_FILTER }}
+      INCLUDE_NUGET_LA_FEED: ${{ steps.set-config.outputs.INCLUDE_NUGET_LA_FEED }}
+      NUGET_PUBLISH_FEED_URL: ${{ steps.set-config.outputs.NUGET_PUBLISH_FEED_URL }}
+      WINPCAP_ROOT_DESTINATION: ${{ steps.set-config.outputs.WINPCAP_ROOT_DESTINATION }}
+      ALTERNATIVE_BASHUTILS_PATH: ${{ steps.set-config.outputs.ALTERNATIVE_BASHUTILS_PATH }}
 
     steps:
       - uses: actions/checkout@v2
-      - name: Correct secrets and repository variables
+      - name: set environment
+        id: set-config
+        shell: bash
         run: |
-          required_vars=("BUILD_DIR" "MACOS_SIGNING_IDENTITY" "BUILD_WINDOWS" "BUILD_MACOS" "BUILD_LINUX" "RELEASE_MACOS" "RELEASE_WINDOWS" "RELEASE_LINUX" "GTEST_FILTER" "LIB_NAME" "RUNNER_LABELS_MACOS" "RUNNER_LABELS_WINDOWS" "RUNNER_LABELS_LINUX" "RUNNER_LABELS_LINUX_ARM64")
-          required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
+          # # Required variables
+          # Required so that the json string is parsed correctly
+          build_config=${{vars.BUILD_CONFIG}}
+          echo "BUILD_CONFIG=$build_config" >> $GITHUB_ENV
 
-          printf "Checking required vars..."
+          required_variables=('"package_name"' '"macos_signing_identity"' '"runner_configs"')
           continue=0
-          for var in "${required_vars[@]}"; do
-            if [ -z "${!var}" ]; then
-              continue=1
-              printf "\n❌ Variable '$var' is not set or is empty."
-            fi
+          for var in "${required_variables[@]}"; do
+              echo $build_config | jq --argjson k "$var" -e 'has($k) and .k != ""' > /dev/null || (echo "Configuration parameter $var is missing or is empty." && continue=1)
           done
-          if [ $continue = 0 ];then
-            printf "ok.\n"
+          if [[ $continue = 1 ]]; then
+            exit 1
           fi
 
+          # Parse json string -c for compact output and -e for setting exit code
+          lib_name=$(echo $build_config | jq -e -c '.package_name')
+          macos_signing_identity=$(echo $build_config | jq -e -c '.macos_signing_identity')
+          echo "LIB_NAME=$lib_name" >> $GITHUB_OUTPUT
+          echo "MACOS_SIGNING_IDENTITY=$macos_signing_identity" >> $GITHUB_OUTPUT
+
+          # # Optional variables using jq and echo-ing the fallback value if any errors during parsing.
+          bashutils_dir=$(echo "$build_config" | jq -c -e 'if has("alternative_bashutils_path") then .alternative_bashutils_path else "." end')
+          winpcap_dir=$(echo "$build_config" | jq -c -e 'if has("winpcap_destination_root") then .winpcap_destination_root else "." end')
+          build_dir=$(echo "$build_config" | jq -c -e 'if has("build_directory") then .build_directory else "_build" end')
+          gtest_filter=$(echo "$build_config" | jq -c -e 'if has("gtest_filter") then .gtest_filter else "*" end')
+          include_nuget_la_feed=$(echo "$build_config" | jq -c -e 'if has("include_nuget_la_feed") then .include_nuget_la_feed else "false" end')
+          nuget_publish_feed_url=$(echo "$build_config" | jq -c -e 'if has("nuget_publish_feed_url") then .nuget_publish_feed_url else "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json" end')
+
+          # Writting output so that it is available to sub-sequent jobs
+          echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
+          echo "INCLUDE_NUGET_LA_FEED=$include_nuget_la_feed" >> $GITHUB_OUTPUT
+          echo "NUGET_PUBLISH_FEED_URL=$nuget_publish_feed_url" >> $GITHUB_OUTPUT
+          echo "BUILD_DIR=$build_dir" >> $GITHUB_OUTPUT
+          echo "WINPCAP_ROOT_DESTINATION=$winpcap_dir" >> $GITHUB_OUTPUT
+          echo "ALTERNATIVE_BASHUTILS_PATH=$bashutils_dir" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
+
+      - name: Check secrets and set compute runners
+        id: config-matrix
+        run: |
+          if [ -z "$BUILD_CONFIG" ]; then
+            echo "Variable BUILD_CONFIG is not set or empty."
+          fi
+          runner_configs=$(echo "$BUILD_CONFIG" | jq -c '{include: [.runner_configs[] | [{config: "release"} + ., {config: "debug"} + .]] | flatten}')
+          configs_count=$(echo $runner_configs | jq '.include | length')
+
+          if [[ $configs_count < 1 ]]; then
+            echo "No valid runner configuration found, please provide at least 1 configuration.\n\ne.g. "runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"}]"
+            exit 1
+          fi
+
+          echo "matrix=$runner_configs" >> "$GITHUB_OUTPUT"
+
+          required_secrets=("APPLE_CERTIFICATES_P12_BASE64_PASSWORD" "APPLE_CERTIFICATES_P12_BASE64" "KEYCHAIN_PASSWORD")
+
+          continue=0
           printf "\nChecking required secrets..."
           for secret in "${required_secrets[@]}"; do
             if [ -z "${!secret}" ]; then
@@ -78,11 +114,10 @@ jobs:
           exit $continue
 
 
+
   validate:
     needs: pre-workflow-checks
     runs-on: windows-2022
-    outputs:
-      runners: ${{ steps.runners-matrix.outputs.runners }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -97,7 +132,7 @@ jobs:
     - name: Run fix_files
       shell: bash {0}
       run: |
-        alternative_bashutils_path=${{inputs.ALTERNATIVE_BASHUTILS_PATH}}
+        alternative_bashutils_path=${{needs.pre-workflow-checks.outputs.ALTERNATIVE_BASHUTILS_PATH}}
         $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
 
     - name: Check for changes
@@ -108,42 +143,27 @@ jobs:
           echo "Some files need formatting/fixing. Please run the script and commit the changes."
           exit 1
         fi
-    - name: prepare-runners-matrix
-      id: runners-matrix
-      shell: bash
-      run: |
-        macos=$([ ${{vars.BUILD_MACOS}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_MACOS}}' '$r' || echo '""')
-        echo $macos
-        linux_arm64=$([ ${{vars.BUILD_LINUX}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX_ARM64}}' '$r' || echo '""')
-        echo $linux_arm64
-        linux=$([ ${{vars.BUILD_LINUX}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_LINUX}}' '$r' || echo '""')
-        echo $linux
-        windows=$([ ${{vars.BUILD_WINDOWS}} = "true"  ] && jq -n --argjson r '${{vars.RUNNER_LABELS_WINDOWS}}' '$r' || echo '""')
-        echo $windows
-
-        runners=$(jq -n --argjson m "$macos" --argjson l "$linux" --argjson larm "$linux_arm64" --argjson w "$windows" '[$m,$l,$larm,$w]' | jq 'del(.[] | select(. == ""))' | tr -d '\n' )
-        echo $runners
-        if [ $runners = "[]" ]; then
-          echo "No platform selected, set one of repository variable BUILD_{OS} to 'true'"
-          exit 1
-        fi
-        echo "runners=$runners" >> "$GITHUB_OUTPUT"
 
   build-test:
-    needs: validate
+    needs:
+      - validate
+      - pre-workflow-checks
     env:
       LC_ALL: en_US.UTF-8
 
     strategy:
       fail-fast: false
-      matrix:
-        config:
-          - debug
-          - release
-        runner-label: ${{ fromJSON(needs.validate.outputs.runners) }}
-
-    runs-on: ${{matrix.runner-label}}
+      matrix: ${{ fromJSON(needs.pre-workflow-checks.outputs.matrix) }}
+    runs-on: ${{matrix.labels}}
+    name: Build-test (${{matrix.config}}, ${{matrix.labels}}, ${{matrix.arch}})
     steps:
+    - name: test-matrix
+      shell: bash
+      run: |
+        echo "Matrix values"
+        echo "${{matrix.labels}}"
+        echo "${{matrix.arch}}"
+
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -156,23 +176,24 @@ jobs:
     - name: Configure runner
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
       with:
-        WINPCAP_ROOT_DESTINATION: ${{inputs.WINPCAP_ROOT_DESTINATION}}
+        WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
         APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
         KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@main
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
       with:
         push_bindings: 'false'
-        GTEST_FILTER: '${{vars.GTEST_FILTER}}'
+        RUNNER_ARCH: ${{matrix.arch}}
+        GTEST_FILTER: '${{needs.pre-workflow-checks.outputs.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
         SWIG_DIR: ${{steps.la_swig.outputs.swig_dir}}
-        BUILD_DIR: "${{env.BUILD_DIR}}"
-        include_nuget_la_feed_url:  "${{env.INCLUDE_NUGET_LA_FEED}}"
+        BUILD_DIR: "${{needs.pre-workflow-checks.outputs.BUILD_DIR}}"
+        include_nuget_la_feed_url:  "${{needs.pre-workflow-checks.outputs.INCLUDE_NUGET_LA_FEED}}"
         CONFIG: ${{matrix.config}}
-        MACOS_SIGNING_IDENTITY: ${{env.MACOS_SIGNING_IDENTITY}}
-        NUGET_PUBLISH_FEED_URL: ${{env.NUGET_PUBLISH_FEED_URL}}
-        LIB_NAME: "la_networkInterfaceHelper"
+        MACOS_SIGNING_IDENTITY: ${{needs.pre-workflow-checks.outputs.MACOS_SIGNING_IDENTITY}}
+        NUGET_PUBLISH_FEED_URL: ${{needs.pre-workflow-checks.outputs.NUGET_PUBLISH_FEED_URL}}
+        LIB_NAME: ${{needs.pre-workflow-checks.outputs.LIB_NAME}}
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
