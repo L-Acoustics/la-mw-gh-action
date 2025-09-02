@@ -49,7 +49,7 @@ The **optional parameters** are:
 |winpcap_destination_root|"." (current folder)                                      | The folder to which the winpcap expected path will be appended. i.e. `$winpcap_destination_root/externals/3rdparty/winpcap` |
 |alternative_bashutils_path|"." (current folder)                                    | The folder to which the bashUtils expected path will be appended. i.e. `$alternative_bashutils_path/scripts/bashUtils` |
 
-### Build schema
+### Build config schema
 The build configuration is done through a json string read within the workflow. This Json string should be set as a repository variable.
 The schema of the json object is shown bellow:
 ```json
@@ -99,7 +99,7 @@ The schema of the json object is shown bellow:
       "type": "string"
     },
     "build_directory": {
-      type: "string"
+      "type": "string"
     },
   },
   "required": ["runner_configs", "macos_signing_identity", "package_name"],
@@ -142,14 +142,43 @@ An example of a configuration:
 ```
 As a single line string.
 ```text
-'{"runner_configs":[{"labels":"ubuntu-22.04","arch":"x64"},{"labels":"ubuntu-22.04-arm","arch":"arm64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"arm64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"x64"},{"labels":["self-hosted","arm64","macOS","my-runner-group"],"arch":"universal"},{"labels":"windows-2022","arch":"x64"}],"gtest_filter":"-MYTESTS*","macos_signing_identity":"COM_COMPANY (QABCD123)","package_name":"my_package_to_push"}'
+"{\"runner_configs\":[{\"labels\":\"ubuntu-22.04\",\"arch\":\"x64\"},{\"labels\":\"ubuntu-22.04-arm\",\"arch\":\"arm64\"},{\"labels\":\"windows-2022\",\"arch\":\"x64\"},{\"labels\":\"macos-14\",\"arch\":\"x64\"},{\"labels\":\"macos-14\",\"arch\":\"arm64\"},{\"labels\":\"macos-14\",\"arch\":\"universal\"}],\"gtest_filter\":\"-MANUAL*\",\"macos_signing_identity\":\"L-ACOUSTICS (4WPJ48N2K4)\",\"package_name\":\"la_networkInterfaceHelper\"}"
+```
+#### Set build configuration programatically
+
+For better readability and ease editing, it is recommended that you create a file holding the json config and parse the content as escaped json string to the github variable.
+**Example using jq**
+```bash
+# $TARGET_REPOSITORY/.github/workflow/build_config.json
+```
+```json
+{
+  "runner_configs": [
+    {
+      "labels": "ubuntu-22.04",
+      "arch": "x64"
+    },
+    {
+      "labels": "ubuntu-22.04-arm",
+      "arch": "arm64"
+    }
+  ],
+  "gtest_filter":"-MYTESTS*",
+  "macos_signing_identity":"COM_COMPANY (QABCD123)",
+  "package_name": "my_package_to_push"
+}
+```
+
+```bash
+cd $TARGET_REPOSITORY
+jq '.| tostring' .github/workflows/build_config.json | gh variable set BUILD_CONFIG
 ```
 
 ### How to set repository secrets and variables
 #### (Recommended) Github cli
 The repository variables and secrets can be set through the github command line interface (see [setup github cli](https://docs.github.com/en/github-cli/github-cli/quickstart)). **Sufficient repository permissions** are required to set secrets and variables.
 1. Create a file `variables.env` in `.github/workflows`.
-2. Add required variables to the file. NB: All values should be surrounded by single quotes.
+2. Add required variables to the file. NB: All values should be surrounded by quotes.
 3. Set the repository variables using `gh variable` command.
 ```bash
 $> gh variable set -f .github/workflows/variables.env
