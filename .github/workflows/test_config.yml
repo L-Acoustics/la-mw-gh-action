@@ -1,0 +1,20 @@
+# This workflow is meant to test the right config  parsing and matrix build
+
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  test-commit-workflow-config-parse:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{github.token}}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check gh cli
+        shell: bash
+        run: |
+          gh variable list
+
