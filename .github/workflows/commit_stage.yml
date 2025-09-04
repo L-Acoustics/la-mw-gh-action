@@ -8,12 +8,37 @@ on :
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
     inputs:
+      test_mode:
+        type: boolean
+        default: false
+        description: Execute the commit_stage in workflow test mode (i.e. just triggering the config parse)
+      build_config:
+        type: string
+        description: JSON string containing build configuration for test mode
+        required: false
       WINPCAP_ROOT_DESTINATION:
         type: string
         default: "."
       ALTERNATIVE_BASHUTILS_PATH:
         type: string
         default: "."
+    outputs:
+      matrix:
+        value: ${{jobs.pre-workflow-checks.outputs.matrix}}
+      LIB_NAME:
+        value: ${{jobs.pre-workflow-checks.outputs.LIB_NAME}}
+      MACOS_SIGNING_IDENTITY:
+        value: ${{jobs.pre-workflow-checks.outputs.MACOS_SIGNING_IDENTITY}}
+      GTEST_FILTER:
+        value: ${{jobs.pre-workflow-checks.outputs.GTEST_FILTER}}
+      INCLUDE_NUGET_LA_FEED:
+        value: ${{jobs.pre-workflow-checks.outputs.INCLUDE_NUGET_LA_FEED}}
+      NUGET_PUBLISH_FEED_URL:
+        value: ${{jobs.pre-workflow-checks.outputs.NUGET_PUBLISH_FEED_URL}}
+      WINPCAP_ROOT_DESTINATION:
+        value: ${{jobs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
+      ALTERNATIVE_BASHUTILS_PATH:
+        value: ${{jobs.pre-workflow-checks.outputs.ALTERNATIVE_BASHUTILS_PATH}}
 permissions:
   contents: write
   actions: read
@@ -48,6 +73,12 @@ jobs:
           # # Required variables
           # Required so that the json string is parsed correctly
           build_config=${{vars.BUILD_CONFIG}}
+
+          if [[ ${{inputs.test_mode}} == "true" ]];then
+            # setting build_config to be used for test
+            build_config="${{inputs.build_config}}"
+          fi
+
           echo "BUILD_CONFIG=$build_config" >> $GITHUB_ENV
 
           required_variables=('"package_name"' '"macos_signing_identity"' '"runner_configs"')
@@ -117,6 +148,7 @@ jobs:
 
   validate:
     needs: pre-workflow-checks
+    if: ${{ !inputs.test_mode }}
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v2
@@ -145,6 +177,7 @@ jobs:
         fi
 
   build-test:
+    if: ! inputs.test_mode
     needs:
       - validate
       - pre-workflow-checks
