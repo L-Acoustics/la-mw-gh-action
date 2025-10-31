@@ -50,6 +50,8 @@ env:
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+  APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
 
 jobs:
   pre-workflow-checks:
@@ -142,6 +144,10 @@ jobs:
           if [ $continue = 0 ];then
             printf "ok.\n"
           fi
+          use_gh_app=${{var.USE_GH_APP}}
+
+          [[ "$use_gh_app" == "True" ]] && [[ -z "$APP_PRIVATE_KEY" ]] && echo "USE_GH_APP set to $use_gh_app put no APP_PRIVATE_KEY set." && continue=1
+
           exit $continue
 
 
@@ -197,7 +203,23 @@ jobs:
         echo "${{matrix.labels}}"
         echo "${{matrix.arch}}"
 
+    - uses: actions/create-github-app-token@v2
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      id: app-token
+      with:
+        # required
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+    - uses: actions/checkout@v4
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      with:
+        token: ${{ steps.app-token.outputs.token }}
+        ref: ${{ github.head_ref }}
+        recursive: true
+        # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
+        persist-credentials: false
     - uses: actions/checkout@v2
+      if: ${{ vars.USE_GH_APP != 'False' }}
       with:
         submodules: recursive
 
