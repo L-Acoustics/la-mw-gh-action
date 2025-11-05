@@ -7,6 +7,7 @@ on :
       APPLE_CERTIFICATES_P12_BASE64_PASSWORD:
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
+      APP_PRIVATE_KEY:
     inputs:
       test_mode:
         type: boolean
