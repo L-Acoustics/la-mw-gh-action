@@ -145,7 +145,7 @@ jobs:
           if [ $continue = 0 ];then
             printf "ok.\n"
           fi
-          use_gh_app=${{var.USE_GH_APP}}
+          use_gh_app=${{vars.USE_GH_APP}}
 
           [[ "$use_gh_app" == "True" ]] && [[ -z "$APP_PRIVATE_KEY" ]] && echo "USE_GH_APP set to $use_gh_app put no APP_PRIVATE_KEY set." && continue=1
 
