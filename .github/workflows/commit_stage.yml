@@ -165,18 +165,19 @@ jobs:
         # required
         app-id: ${{ vars.APP_ID }}
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
-    - uses: actions/checkout@v4
+        owner: ${{ github.repository_owner }}
+    - uses: actions/checkout@v5
       if: ${{ vars.USE_GH_APP == 'True' }}
       with:
         token: ${{ steps.app-token.outputs.token }}
         ref: ${{ github.head_ref }}
-        recursive: true
+        submodules: true
         # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
         persist-credentials: false
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v5
       if: ${{ vars.USE_GH_APP != 'False' }}
       with:
-        submodules: recursive
+        submodules: true
     - name: Install job dependencies
       shell: bash
       run: |
@@ -227,18 +228,19 @@ jobs:
         # required
         app-id: ${{ vars.APP_ID }}
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
-    - uses: actions/checkout@v4
+        owner: ${{ github.repository_owner }}
+    - uses: actions/checkout@v5
       if: ${{ vars.USE_GH_APP == 'True' }}
       with:
         token: ${{ steps.app-token.outputs.token }}
         ref: ${{ github.head_ref }}
-        recursive: true
+        submodules: true
         # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
         persist-credentials: false
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v5
       if: ${{ vars.USE_GH_APP != 'False' }}
       with:
-        submodules: recursive
+        submodules: true
 
     - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@main
       name: Install custom SWIG
