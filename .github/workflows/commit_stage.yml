@@ -158,7 +158,23 @@ jobs:
     needs: pre-workflow-checks
     runs-on: windows-2022
     steps:
+    - uses: actions/create-github-app-token@v2
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      id: app-token
+      with:
+        # required
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+    - uses: actions/checkout@v4
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      with:
+        token: ${{ steps.app-token.outputs.token }}
+        ref: ${{ github.head_ref }}
+        recursive: true
+        # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
+        persist-credentials: false
     - uses: actions/checkout@v2
+      if: ${{ vars.USE_GH_APP != 'False' }}
       with:
         submodules: recursive
     - name: Install job dependencies
