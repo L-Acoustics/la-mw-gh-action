@@ -56,7 +56,7 @@ env:
 jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner == "L-Acoustics" }}
+    if: ${{ github.repository_owner == 'L-Acoustics' }}
     outputs:
       matrix: ${{ steps.config-matrix.outputs.matrix }}
       LIB_NAME: ${{ steps.set-config.outputs.LIB_NAME }}
@@ -183,7 +183,7 @@ jobs:
         fi
 
   build-test:
-    if: ${{ github.repository_owner == "L-Acoustics" }}
+    if: ${{ github.repository_owner == 'L-Acoustics' }}
     needs:
       - validate
       - pre-workflow-checks
