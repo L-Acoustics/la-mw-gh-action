@@ -171,13 +171,13 @@ jobs:
       with:
         token: ${{ steps.app-token.outputs.token }}
         ref: ${{ github.head_ref }}
-        submodules: true
+        submodules: recursive
         # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
         persist-credentials: false
     - uses: actions/checkout@v5
-      if: ${{ vars.USE_GH_APP != 'False' }}
+      if: ${{ vars.USE_GH_APP != 'True' }}
       with:
-        submodules: true
+        submodules: recursive
     - name: Install job dependencies
       shell: bash
       run: |
