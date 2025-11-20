@@ -181,8 +181,9 @@ jobs:
         KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
         setup_keychain: "true"
 
-    - name: Build and Test Library
-      uses: ./.github/actions/la-build
+
+    - name: Build, Test, Push Library
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v1
       with:
         push_bindings: 'true'
         RUNNER_ARCH: ${{matrix.arch}}
