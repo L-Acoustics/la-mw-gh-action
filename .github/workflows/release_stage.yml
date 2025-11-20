@@ -8,18 +8,6 @@ on:
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
     inputs:
-      release_linux:
-        description: 'Release the linux package'
-        type: string
-        default: 'true'
-      release_windows:
-        description: 'Release the windows package'
-        type: string
-        default: 'true'
-      release_macos:
-        description: 'Release the macos package'
-        type: string
-        default: 'true'
       create_gh_release:
         description: 'Create the Github Release'
         type: string
@@ -179,13 +167,13 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@main
+    - uses: ./.github/actions/la-swig
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
+      uses: ./.github/actions/la-configure-runner
       with:
         WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
@@ -194,7 +182,7 @@ jobs:
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@main
+      uses: ./.github/actions/la-build
       with:
         push_bindings: 'true'
         RUNNER_ARCH: ${{matrix.arch}}
