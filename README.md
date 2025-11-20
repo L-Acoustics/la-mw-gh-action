@@ -23,7 +23,7 @@ The **required secrets** are :
 |KEYCHAIN_PASSWORD|_required_|*SECRETS* The password for the created macos keychain|
 |APPLE_CERTIFICATES_P12_BASE64_PASSWORD|_required_|*SECRETS* The certificate password required to install it in the keychain|
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
-|APP_PRIVATE_KEY|_optional_| *SERCRETS* The app private key for custom token generation|
+|APP_PRIVATE_KEY|_optional_| *SERCRETS* The app private key for custom token generation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
 
 The **required variables** are:
 |name|default|description|
@@ -190,7 +190,7 @@ Templates for the dotenv files can be found in [templates/workflows/dotenv](http
 
 ⚠️ **Do not Version the `secrets.env` files.**
 
-### Using a GitHub App to authenticate private submodules
+### Using a GitHub App to authenticate private submodules 
 
 If your repository includes private submodules, you can optionally use a GitHub App to authenticate the checkout operation instead of the default `GITHUB_TOKEN`.
 
