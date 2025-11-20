@@ -161,13 +161,13 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@main
+    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v2
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@v2
       with:
         WINPCAP_ROOT_DESTINATION: ${{inputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
