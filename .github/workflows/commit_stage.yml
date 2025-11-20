@@ -8,13 +8,6 @@ on :
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
       APP_PRIVATE_KEY:
-    inputs:
-      WINPCAP_ROOT_DESTINATION:
-        type: string
-        default: "."
-      ALTERNATIVE_BASHUTILS_PATH:
-        type: string
-        default: "."
 permissions:
   contents: write
   actions: read
