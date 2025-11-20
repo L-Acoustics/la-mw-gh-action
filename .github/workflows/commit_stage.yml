@@ -127,6 +127,7 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/create-github-app-token@v2
+      name: Create GitHub App custom token
       if: ${{ vars.USE_GH_APP == 'True' }}
       id: app-token
       with:
@@ -135,6 +136,7 @@ jobs:
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
         owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v5
+      name: Checkout repository (custom token)
       if: ${{ vars.USE_GH_APP == 'True' }}
       with:
         token: ${{ steps.app-token.outputs.token }}
@@ -143,6 +145,7 @@ jobs:
         # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
         persist-credentials: false
     - uses: actions/checkout@v5
+      name: Checkout repository
       if: ${{ vars.USE_GH_APP != 'True' }}
       with:
         submodules: recursive
@@ -197,6 +200,7 @@ jobs:
         echo "${{matrix.arch}}"
 
     - uses: actions/create-github-app-token@v2
+      name: Create GitHub App custom token
       if: ${{ vars.USE_GH_APP == 'True' }}
       id: app-token
       with:
@@ -205,18 +209,19 @@ jobs:
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
         owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v5
+      name: Checkout repository (custom token)
       if: ${{ vars.USE_GH_APP == 'True' }}
       with:
         token: ${{ steps.app-token.outputs.token }}
         ref: ${{ github.head_ref }}
-        submodules: true
+        submodules: recursive
         # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
         persist-credentials: false
     - uses: actions/checkout@v5
-      if: ${{ vars.USE_GH_APP != 'False' }}
+      name: Checkout repository
+      if: ${{ vars.USE_GH_APP != 'True' }}
       with:
-        submodules: true
-
+        submodules: recursive
     - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@dev
       name: Install custom SWIG
       id: la_swig

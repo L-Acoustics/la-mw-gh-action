@@ -99,6 +99,12 @@ The schema of the json object is shown bellow:
     "nuget_publish_feed_url":{
       "type": "string"
     },
+    "alternative_bashutils_path": {
+      "type": "string"
+    },
+    "winpcap_destination_root": {
+      "type": "string"
+    },
     "build_directory": {
       "type": "string"
     },
@@ -149,10 +155,9 @@ As a single line string.
 
 For better readability and ease editing, it is recommended that you create a file holding the json config and parse the content as escaped json string to the github variable.
 **Example using jq**
-```bash
-# $TARGET_REPOSITORY/.github/workflow/build_config.json
-```
 ```json
+# content of : $TARGET_REPOSITORY/.github/workflow/build_config.json
+
 {
   "runner_configs": [
     {
