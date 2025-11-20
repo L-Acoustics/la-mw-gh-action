@@ -148,20 +148,20 @@ jobs:
         curl https://www.kikisoft.com/Hive/clang-format/clang-format-7.0.0-LambdaPatch-windows.exe -o clang-format.exe
         ln -s $(pwd)/clang-format.exe /usr/bin/clang-format
     - name: Run fix_files public pr
-      if: contains(needs.pre-workflow-checks.results, 'skipped')
+      if: contains(needs.pre-workflow-checks.result, 'skipped')
       shell: bash {0}
       run: |
         alternative_bashutils_path=.
         $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
     - name: Run fix_files
-      if: contains(needs.pre-workflow-checks.results, 'success')
+      if: contains(needs.pre-workflow-checks.result, 'success')
       shell: bash {0}
       run: |
         alternative_bashutils_path=${{needs.pre-workflow-checks.outputs.ALTERNATIVE_BASHUTILS_PATH}}
         $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
 
     - name: Check for changes
-      if: contains(needs.pre-workflow-checks.results, 'success')
+      if: contains(needs.pre-workflow-checks.result, 'success')
       shell: bash
       run: |
         git diff --name-status --exit-code
@@ -212,13 +212,13 @@ jobs:
       with:
         submodules: true
 
-    - uses: ./.github/actions/la-swig
+    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@dev
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: ./.github/actions/la-configure-runner
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@dev
       with:
         WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
@@ -227,7 +227,7 @@ jobs:
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: ./.github/actions/la-build
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
       with:
         push_bindings: 'false'
         RUNNER_ARCH: ${{matrix.arch}}
