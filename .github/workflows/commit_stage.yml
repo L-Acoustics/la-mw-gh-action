@@ -8,6 +8,11 @@ on :
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
       APP_PRIVATE_KEY:
+    inputs:
+      release:
+        description: 'Should create a release and push C# bindings'
+        type: string
+        default: 'false'
 permissions:
   contents: write
   actions: read
@@ -229,7 +234,7 @@ jobs:
     - name: Build and Test Library
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
       with:
-        push_bindings: 'false'
+        push_bindings: ${{ inputs.release }} == 'true' && 'true' || 'false'
         RUNNER_ARCH: ${{matrix.arch}}
         GTEST_FILTER: '${{needs.pre-workflow-checks.outputs.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
