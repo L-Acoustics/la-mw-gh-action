@@ -43,7 +43,7 @@ jobs:
       ALTERNATIVE_BASHUTILS_PATH: ${{ steps.set-config.outputs.ALTERNATIVE_BASHUTILS_PATH }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: set environment
         id: set-config
         shell: bash
@@ -219,13 +219,13 @@ jobs:
       with:
         submodules: true
 
-    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@main
+    - uses: ./.github/actions/la-swig
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@main
+      uses: ./.github/actions/la-configure-runner
       with:
         WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
@@ -234,7 +234,7 @@ jobs:
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
+      uses: ./.github/actions/la-build
       with:
         push_bindings: 'false'
         RUNNER_ARCH: ${{matrix.arch}}
