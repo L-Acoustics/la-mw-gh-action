@@ -125,6 +125,7 @@ jobs:
 
   validate:
     needs: pre-workflow-checks
+    if: always()
     runs-on: windows-2022
     steps:
     - uses: actions/create-github-app-token@v2
@@ -153,14 +154,21 @@ jobs:
         choco install -y dos2unix jq
         curl https://www.kikisoft.com/Hive/clang-format/clang-format-7.0.0-LambdaPatch-windows.exe -o clang-format.exe
         ln -s $(pwd)/clang-format.exe /usr/bin/clang-format
-
+    - name: Run fix_files public pr
+      if: contains(needs.pre-workflow-checks.results, 'skipped')
+      shell: bash {0}
+      run: |
+        alternative_bashutils_path=.
+        $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
     - name: Run fix_files
+      if: contains(needs.pre-workflow-checks.results, 'success')
       shell: bash {0}
       run: |
         alternative_bashutils_path=${{needs.pre-workflow-checks.outputs.ALTERNATIVE_BASHUTILS_PATH}}
         $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
 
     - name: Check for changes
+      if: contains(needs.pre-workflow-checks.results, 'success')
       shell: bash
       run: |
         git diff --name-status --exit-code
