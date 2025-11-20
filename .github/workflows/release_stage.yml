@@ -8,7 +8,7 @@ on:
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
     inputs:
-      create_gh_release:
+      release:
         description: 'Create the Github Release'
         type: string
         default: 'false'
@@ -24,10 +24,12 @@ env:
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+  APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
 jobs:
   pre-workflow-checks:
     runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'L-Acoustics' }}
     outputs:
       matrix: ${{ steps.config-matrix.outputs.matrix }}
       LIB_NAME: ${{ steps.set-config.outputs.LIB_NAME }}
@@ -39,7 +41,7 @@ jobs:
       ALTERNATIVE_BASHUTILS_PATH: ${{ steps.set-config.outputs.ALTERNATIVE_BASHUTILS_PATH }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: set environment
         id: set-config
         shell: bash
@@ -47,6 +49,7 @@ jobs:
           # # Required variables
           # Required so that the json string is parsed correctly
           build_config=${{vars.BUILD_CONFIG}}
+
           echo "BUILD_CONFIG=$build_config" >> $GITHUB_ENV
 
           required_variables=('"package_name"' '"macos_signing_identity"' '"runner_configs"')
@@ -110,15 +113,37 @@ jobs:
           if [ $continue = 0 ];then
             printf "ok.\n"
           fi
+          use_gh_app=${{vars.USE_GH_APP}}
+
+          [[ "$use_gh_app" == "True" ]] && [[ -z "$APP_PRIVATE_KEY" ]] && echo "USE_GH_APP set to $use_gh_app put no APP_PRIVATE_KEY set." && continue=1
+
           exit $continue
 
 
 
   validate:
     needs: pre-workflow-checks
+    if: always()
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/create-github-app-token@v2
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      id: app-token
+      with:
+        # required
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+        owner: ${{ github.repository_owner }}
+    - uses: actions/checkout@v5
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      with:
+        token: ${{ steps.app-token.outputs.token }}
+        ref: ${{ github.head_ref }}
+        submodules: recursive
+        # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
+        persist-credentials: false
+    - uses: actions/checkout@v5
+      if: ${{ vars.USE_GH_APP != 'True' }}
       with:
         submodules: recursive
     - name: Install job dependencies
@@ -127,14 +152,21 @@ jobs:
         choco install -y dos2unix jq
         curl https://www.kikisoft.com/Hive/clang-format/clang-format-7.0.0-LambdaPatch-windows.exe -o clang-format.exe
         ln -s $(pwd)/clang-format.exe /usr/bin/clang-format
-
+    - name: Run fix_files public pr
+      if: contains(needs.pre-workflow-checks.result, 'skipped')
+      shell: bash {0}
+      run: |
+        alternative_bashutils_path=.
+        $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
     - name: Run fix_files
+      if: contains(needs.pre-workflow-checks.result, 'success')
       shell: bash {0}
       run: |
         alternative_bashutils_path=${{needs.pre-workflow-checks.outputs.ALTERNATIVE_BASHUTILS_PATH}}
         $alternative_bashutils_path/scripts/bashUtils/fix_files.sh
 
     - name: Check for changes
+      if: contains(needs.pre-workflow-checks.result, 'success')
       shell: bash
       run: |
         git diff --name-status --exit-code
@@ -143,7 +175,8 @@ jobs:
           exit 1
         fi
 
-  build-test-push:
+  build-test:
+    if: ${{ github.repository_owner == 'L-Acoustics' }}
     needs:
       - validate
       - pre-workflow-checks
@@ -154,26 +187,43 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.pre-workflow-checks.outputs.matrix) }}
     runs-on: ${{matrix.labels}}
-    name: Build-test-push (${{matrix.config}}, ${{matrix.labels}}, ${{matrix.arch}})
+    name: Build-test (${{matrix.config}}, ${{matrix.labels}}, ${{matrix.arch}})
     steps:
     - name: test-matrix
       shell: bash
       run: |
         echo "Matrix values"
-        echo ${{matrix.labels}}
+        echo "${{matrix.labels}}"
         echo "${{matrix.arch}}"
 
-    - uses: actions/checkout@v2
+    - uses: actions/create-github-app-token@v2
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      id: app-token
       with:
-        submodules: recursive
+        # required
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+        owner: ${{ github.repository_owner }}
+    - uses: actions/checkout@v5
+      if: ${{ vars.USE_GH_APP == 'True' }}
+      with:
+        token: ${{ steps.app-token.outputs.token }}
+        ref: ${{ github.head_ref }}
+        submodules: true
+        # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
+        persist-credentials: false
+    - uses: actions/checkout@v5
+      if: ${{ vars.USE_GH_APP != 'False' }}
+      with:
+        submodules: true
 
-    - uses: ./.github/actions/la-swig
+    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@dev
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: ./.github/actions/la-configure-runner
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@dev
       with:
         WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
@@ -181,11 +231,10 @@ jobs:
         KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
         setup_keychain: "true"
 
-
-    - name: Build, Test, Push Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v1
+    - name: Build and Test Library
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
       with:
-        push_bindings: 'true'
+        push_bindings: ${{ inputs.release }} == 'true' && 'true' || 'false'
         RUNNER_ARCH: ${{matrix.arch}}
         GTEST_FILTER: '${{needs.pre-workflow-checks.outputs.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
