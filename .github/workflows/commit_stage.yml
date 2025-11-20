@@ -237,7 +237,7 @@ jobs:
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@dev
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v2
       with:
         push_bindings: ${{ inputs.release }} == 'true' && 'true' || 'false'
         RUNNER_ARCH: ${{matrix.arch}}
