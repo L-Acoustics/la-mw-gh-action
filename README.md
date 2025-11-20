@@ -23,6 +23,7 @@ The **required secrets** are :
 |KEYCHAIN_PASSWORD|_required_|*SECRETS* The password for the created macos keychain|
 |APPLE_CERTIFICATES_P12_BASE64_PASSWORD|_required_|*SECRETS* The certificate password required to install it in the keychain|
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
+|APP_PRIVATE_KEY|_optional_| *SERCRETS* The app private key for custom token generation|
 
 The **required variables** are:
 |name|default|description|
@@ -188,3 +189,28 @@ $> gh variable set -f .github/workflows/variables.env
 Templates for the dotenv files can be found in [templates/workflows/dotenv](https://github.com/L-Acoustics/la-mw-gh-action/blob/main/templates/workflows/dotenv)
 
 ⚠️ **Do not Version the `secrets.env` files.**
+
+### Using a GitHub App to authenticate private submodules
+
+If your repository includes private submodules, you can optionally use a GitHub App to authenticate the checkout operation instead of the default `GITHUB_TOKEN`.
+
+- `USE_GH_APP`: repository **variable** (`"True"` or `"False"`). When set to `"True"`, the workflows will create an app installation token and use it for `actions/checkout` so private submodules can be accessed.
+- `APP_ID`: repository **variable** (the numeric GitHub App ID) required when `USE_GH_APP` is `"True"`.
+- `APP_PRIVATE_KEY`: repository **secret** (the GitHub App private key PEM content) required when `USE_GH_APP` is `"True"`.
+
+Example entries for the dotenv templates (do not commit `secrets.env`):
+
+`templates/workflows/dotenv/variables.env` (example additions)
+```dotenv
+APP_ID="12345"
+USE_GH_APP="True"
+```
+
+`templates/workflows/dotenv/secrets.env` (example additions — keep this file secret)
+```dotenv
+APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+```
+
+Behavior notes:
+- When `USE_GH_APP` is `"True"`, the workflows call `actions/create-github-app-token` to exchange the app credentials for an installation token, and `actions/checkout` uses that token with `persist-credentials: false`.
+- If `USE_GH_APP` is enabled but `APP_PRIVATE_KEY` or `APP_ID` are not provided the workflow will fail early with an explanatory message.
