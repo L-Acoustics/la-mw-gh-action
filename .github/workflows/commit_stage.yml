@@ -222,13 +222,13 @@ jobs:
       if: ${{ vars.USE_GH_APP != 'True' }}
       with:
         submodules: recursive
-    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@dev
+    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v3
       name: Install custom SWIG
       id: la_swig
 
 
     - name: Configure runner
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@dev
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@v3
       with:
         WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
@@ -237,7 +237,7 @@ jobs:
         setup_keychain: "true"
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v2
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v3
       with:
         push_bindings: ${{ inputs.release }} == 'true' && 'true' || 'false'
         RUNNER_ARCH: ${{matrix.arch}}
