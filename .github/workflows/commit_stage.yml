@@ -246,3 +246,9 @@ jobs:
         NUGET_PUBLISH_FEED_URL: ${{needs.pre-workflow-checks.outputs.NUGET_PUBLISH_FEED_URL}}
         LIB_NAME: ${{needs.pre-workflow-checks.outputs.LIB_NAME}}
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag' || inputs.release == 'true'
+      with:
+        prerelease: ${{ contains(github.ref_name, 'beta') }}
