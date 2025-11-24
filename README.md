@@ -32,7 +32,7 @@ The **variables** are:
 |BUILD_CONFIG                   |_required_|The json string representing the build configuration cf "Build configuration settings"|
 |USE_GH_APP_CHECKOUT            |_optional_|Whether to use a github app to authenticate the checkout operation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
 |APP_ID_TOKEN                   |_optional_|The Github App ID to be used if github app authentication is used.|
-|FULL_CI_WORKFLOW               |'False'   |Whether to run the full CI workflow on L-Acoustics forks.|
+|FULL_CI_WORKFLOW               |_optional_|Whether to run the full CI workflow on L-Acoustics forks.|
 
 ### Workflow configuration (json):
 The **required parameters** are:
