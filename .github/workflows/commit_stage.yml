@@ -239,7 +239,7 @@ jobs:
     - name: Build and Test Library
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v3
       with:
-        push_bindings: ${{ inputs.release }} == 'true' && 'true' || 'false'
+        push_bindings: "${{ inputs.release == 'true' || github.ref_type == 'tag' }}"
         RUNNER_ARCH: ${{matrix.arch}}
         GTEST_FILTER: '${{needs.pre-workflow-checks.outputs.GTEST_FILTER}}'
         SWIG_EXEC: ${{steps.la_swig.outputs.swig_exec}}
