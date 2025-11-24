@@ -16,7 +16,7 @@ Each workflow can be integrated into a repository using the following templates:
 
 The workflow configuration is done with JSON object defined in [repository action variables](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#defining-configuration-variables-for-multiple-workflows) and [repository secrets](https://docs.github.com/en/actions/concepts/security/secrets?versionId=free-pro-team%40latest&productId=actions) .
 ### Repository variables and secrets
-The **required secrets** are :
+The **secrets** are :
 
 |name|default|description|
 |----|----------|-----------|
@@ -24,11 +24,15 @@ The **required secrets** are :
 |APPLE_CERTIFICATES_P12_BASE64_PASSWORD|_required_|*SECRETS* The certificate password required to install it in the keychain|
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
 |PRIVATE_KEY_APP_CHECKOUT|_optional_| *SERCRETS* The app private key for custom token generation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
+|PAT_CHECKOUT|_optional_| *SERCRETS* A Private Access Token to be used during checkout. |
 
-The **required variables** are:
+The **variables** are:
 |name|default|description|
 |----|-------|-----------|
 |BUILD_CONFIG                   |_required_|The json string representing the build configuration cf "Build configuration settings"|
+|USE_GH_APP_CHECKOUT            |_optional_|Whether to use a github app to authenticate the checkout operation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
+|APP_ID_TOKEN                   |_optional_|The Github App ID to be used if github app authentication is used.|
+|FULL_CI_WORKFLOW               |'False'   |Whether to run the full CI workflow on L-Acoustics forks.|
 
 ### Workflow configuration (json):
 The **required parameters** are:
