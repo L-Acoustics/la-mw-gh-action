@@ -23,7 +23,7 @@ The **required secrets** are :
 |KEYCHAIN_PASSWORD|_required_|*SECRETS* The password for the created macos keychain|
 |APPLE_CERTIFICATES_P12_BASE64_PASSWORD|_required_|*SECRETS* The certificate password required to install it in the keychain|
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
-|APP_PRIVATE_KEY|_optional_| *SERCRETS* The app private key for custom token generation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
+|PRIVATE_KEY_APP_CHECKOUT|_optional_| *SERCRETS* The app private key for custom token generation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
 
 The **required variables** are:
 |name|default|description|
@@ -199,23 +199,23 @@ Templates for the dotenv files can be found in [templates/workflows/dotenv](http
 
 If your repository includes private submodules, you can optionally use a GitHub App to authenticate the checkout operation instead of the default `GITHUB_TOKEN`.
 
-- `USE_GH_APP`: repository **variable** (`"True"` or `"False"`). When set to `"True"`, the workflows will create an app installation token and use it for `actions/checkout` so private submodules can be accessed.
-- `APP_ID`: repository **variable** (the numeric GitHub App ID) required when `USE_GH_APP` is `"True"`.
-- `APP_PRIVATE_KEY`: repository **secret** (the GitHub App private key PEM content) required when `USE_GH_APP` is `"True"`.
+- `USE_GH_APP_CHECKOUT`: repository **variable** (`"True"` or `"False"`). When set to `"True"`, the workflows will create an app installation token and use it for `actions/checkout` so private submodules can be accessed.
+- `APP_ID_CHECKOUT`: repository **variable** (the numeric GitHub App ID) required when `USE_GH_APP_CHECKOUT` is `"True"`.
+- `PRIVATE_KEY_APP_CHECKOUT`: repository **secret** (the GitHub App private key PEM content) required when `USE_GH_APP_CHECKOUT` is `"True"`.
 
 Example entries for the dotenv templates (do not commit `secrets.env`):
 
 `templates/workflows/dotenv/variables.env` (example additions)
 ```dotenv
-APP_ID="12345"
-USE_GH_APP="True"
+APP_ID_CHECKOUT="12345"
+USE_GH_APP_CHECKOUT="True"
 ```
 
 `templates/workflows/dotenv/secrets.env` (example additions — keep this file secret)
 ```dotenv
-APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+PRIVATE_KEY_APP_CHECKOUT="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
 ```
 
 Behavior notes:
-- When `USE_GH_APP` is `"True"`, the workflows call `actions/create-github-app-token` to exchange the app credentials for an installation token, and `actions/checkout` uses that token with `persist-credentials: false`.
-- If `USE_GH_APP` is enabled but `APP_PRIVATE_KEY` or `APP_ID` are not provided the workflow will fail early with an explanatory message.
+- When `USE_GH_APP_CHECKOUT` is `"True"`, the workflows call `actions/create-github-app-token` to exchange the app credentials for an installation token, and `actions/checkout` uses that token with `persist-credentials: false`.
+- If `USE_GH_APP_CHECKOUT` is enabled but `PRIVATE_KEY_APP_CHECKOUT` or `APP_ID_CHECKOUT` are not provided the workflow will fail early with an explanatory message.

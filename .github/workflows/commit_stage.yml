@@ -7,7 +7,7 @@ on :
       APPLE_CERTIFICATES_P12_BASE64_PASSWORD:
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
-      APP_PRIVATE_KEY:
+      PRIVATE_KEY_APP_CHECKOUT:
     inputs:
       release:
         description: 'Should create a release and push C# bindings'
@@ -24,7 +24,7 @@ env:
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD }}
   APPLE_CERTIFICATES_P12_BASE64: ${{ secrets.APPLE_CERTIFICATES_P12_BASE64 }}
   KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-  APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+  PRIVATE_KEY_APP_CHECKOUT: ${{ secrets.PRIVATE_KEY_APP_CHECKOUT }}
 
 jobs:
   pre-workflow-checks:
@@ -113,9 +113,9 @@ jobs:
           if [ $continue = 0 ];then
             printf "ok.\n"
           fi
-          use_gh_app=${{vars.USE_GH_APP}}
+          use_gh_app=${{vars.USE_GH_APP_CHECKOUT}}
 
-          [[ "$use_gh_app" == "True" ]] && [[ -z "$APP_PRIVATE_KEY" ]] && echo "USE_GH_APP set to $use_gh_app put no APP_PRIVATE_KEY set." && continue=1
+          [[ "$use_gh_app" == "True" ]] && [[ -z "$PRIVATE_KEY_APP_CHECKOUT" ]] && echo "USE_GH_APP_CHECKOUT set to $use_gh_app put no PRIVATE_KEY_APP_CHECKOUT set." && continue=1
 
           exit $continue
 
@@ -128,11 +128,11 @@ jobs:
     steps:
     - uses: actions/create-github-app-token@v2
       name: Create GitHub App custom token
-      if: ${{ vars.USE_GH_APP == 'True' }}
+      if: ${{ vars.USE_GH_APP_CHECKOUT == 'True' }}
       id: app-token
       with:
         # required
-        app-id: ${{ vars.APP_ID }}
+        app-id: ${{ vars.APP_ID_CHECKOUT }}
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
         owner: 'L-Acoustics'
     - uses: actions/checkout@v5
@@ -146,7 +146,7 @@ jobs:
         persist-credentials: false
     - uses: actions/checkout@v5
       name: Checkout repository
-      if: ${{ vars.USE_GH_APP != 'True' }}
+      if: ${{ vars.USE_GH_APP_CHECKOUT != 'True' }}
       with:
         submodules: recursive
     - name: Install job dependencies
@@ -201,16 +201,16 @@ jobs:
 
     - uses: actions/create-github-app-token@v2
       name: Create GitHub App custom token
-      if: ${{ vars.USE_GH_APP == 'True' }}
+      if: ${{ vars.USE_GH_APP_CHECKOUT == 'True' }}
       id: app-token
       with:
         # required
-        app-id: ${{ vars.APP_ID }}
-        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+        app-id: ${{ vars.APP_ID_CHECKOUT }}
+        private-key: ${{ secrets.PRIVATE_KEY_APP_CHECKOUT }}
         owner: 'L-Acoustics'
     - uses: actions/checkout@v5
       name: Checkout repository (custom token)
-      if: ${{ vars.USE_GH_APP == 'True' }}
+      if: ${{ vars.USE_GH_APP_CHECKOUT == 'True' }}
       with:
         token: ${{ steps.app-token.outputs.token }}
         ref: ${{ github.head_ref }}
@@ -219,7 +219,7 @@ jobs:
         persist-credentials: false
     - uses: actions/checkout@v5
       name: Checkout repository
-      if: ${{ vars.USE_GH_APP != 'True' }}
+      if: ${{ vars.USE_GH_APP_CHECKOUT != 'True' }}
       with:
         submodules: recursive
     - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v3
