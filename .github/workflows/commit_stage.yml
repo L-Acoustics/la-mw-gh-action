@@ -136,7 +136,7 @@ jobs:
         # required
         app-id: ${{ vars.APP_ID_CHECKOUT }}
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
-        owner: 'L-Acoustics'
+        owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v5
       name: Checkout repository (Github app token)
       if: ${{ vars.USE_GH_APP == 'True' }}
@@ -214,7 +214,7 @@ jobs:
         # required
         app-id: ${{ vars.APP_ID_CHECKOUT }}
         private-key: ${{ secrets.APP_PRIVATE_KEY }}
-        owner: 'L-Acoustics'
+        owner: ${{ github.repository_owner }}
     - uses: actions/checkout@v5
       name: Checkout repository (Github app token)
       if: ${{ vars.USE_GH_APP == 'True' }}
