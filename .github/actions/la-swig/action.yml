@@ -1,6 +1,11 @@
 name: 'Build SWIG'
 description: 'Builds SWIG from source for Linux, macOS, and Windows'
 
+inputs:
+  short_sha:
+    description: The Commit short sha (8 characters) to use for building swig
+    default: e1fae6f8
+
 outputs:
   swig_exec:
     description: "The path to the swig executable"
@@ -25,7 +30,17 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: ${{ runner.os == 'Windows' && 'tools/swig' || 'swig_install' }}
-        key: swig-${{ env.SWIG_BRANCH }}-${{ runner.os }}-${{ runner.arch }}
+        key: swig-${{inputs.short_sha}}-${{ runner.os }}-${{ runner.arch }}
+
+      # ----------------- Clone Repo -----------------
+    - name: Pull swig repository
+      if: steps.cache-swig-restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        git clone $SWIG_REPOSITORY
+        cd swig
+        git checkout ${{inputs.short_sha}}
+
 
     # ----------------- Linux -----------------
     - name: Install dependencies (Linux)
@@ -65,12 +80,6 @@ runs:
         BISON_PATH=$(cygpath -w "$(ls -d $github_workspace/tools/Bison*)/bin")
         echo "$BISON_PATH" >> $GITHUB_PATH
 
-    # ----------------- Clone Repo -----------------
-    - name: Pull swig repository
-      if: steps.cache-swig-restore.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        git clone -b $SWIG_BRANCH $SWIG_REPOSITORY --single-branch
 
     # ----------------- Build (Linux/macOS) -----------------
     - name: Configure and Build (Linux/macOS)
@@ -113,7 +122,7 @@ runs:
       uses: actions/cache/save@v4
       with:
         path: ${{ runner.os == 'Windows' && 'tools/swig' || 'swig_install' }}
-        key: swig-${{ env.SWIG_BRANCH }}-${{ runner.os }}-${{ runner.arch }}
+        key: swig-${{inputs.short_sha}}-${{ runner.os }}-${{ runner.arch }}
     # ----------------- Outputs -----------------
     - name: Set output directories
       id: write_output_paths
@@ -127,9 +136,10 @@ runs:
 
           exit 0
         fi
-        echo "swig_exec=${{ github.workspace }}/swig_install/bin/swig" >> $GITHUB_OUTPUT
-        echo "swig_dir=${{ github.workspace }}/swig_install/share/swig/4.4.0" >> $GITHUB_OUTPUT
+        swig_lib=$(./swig_install/bin/swig -swiglib)
         echo "Using $(./swig_install/bin/swig -version)"
-        echo "Using swiglib: $(./swig_install/bin/swig -swiglib)"
+        echo "Using swiglib: $swig_lib"
+        echo "swig_exec=${{ github.workspace }}/swig_install/bin/swig" >> $GITHUB_OUTPUT
+        echo "swig_dir=$swig_lib" >> $GITHUB_OUTPUT
 
 

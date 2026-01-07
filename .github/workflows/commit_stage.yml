@@ -239,6 +239,8 @@ jobs:
     - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v3
       name: Install custom SWIG
       id: la_swig
+      with:
+        short_sha: e1fae6f8
 
 
     - name: Configure runner
