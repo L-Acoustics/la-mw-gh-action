@@ -56,19 +56,25 @@ runs:
         ./setup_fresh_env.sh
 
     - name: Install Qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
-        aqtversion: '==3.1.*'
-        version: '6.8.2'
-        host: 'mac'
-        target: 'desktop'
-        arch: 'clang_64'
+        version: '6.10.*'
+        setup-python: false
+        cache: true
+
+    - name: Check Qt install
+      if: 1 == 0
+      shell: bash
+      run: |
+        ls -la $QT_ROOT_DIR/lib/cmake
+        ls -la $QT_ROOT_DIR/lib/cmake/Qt6
 
     - name: Call gen_install
       shell: bash
       run: |
         echo "Generating CMake for Configuration : ${{inputs.CONFIG}}"
-        ./gen_install.sh -c Ninja
+        qtdir="$QT_ROOT_DIR/lib/cmake"
+        ./gen_install.sh -c Ninja -qtdir $qtdir -qtvers 6.8.3
 
     - name: Build
       shell: bash
