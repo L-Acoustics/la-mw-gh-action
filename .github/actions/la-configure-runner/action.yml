@@ -99,7 +99,13 @@ runs:
         brew install wget
         brew install bash
         brew install grep
+
+        # Specific to apps
+        brew install coreutils
+        brew install gnu-tar
         echo "$(brew --prefix grep)/libexec/gnubin" >> $GITHUB_PATH
+        echo "$(brew --prefix coreutils)/libexec/gnubin" >> $GITHUB_PATH
+        echo "$(brew --prefix gnu-tar)/libexec/gnubin" >> $GITHUB_PATH
 
     - name: Install CMake
       if: runner.os == 'macOS'
