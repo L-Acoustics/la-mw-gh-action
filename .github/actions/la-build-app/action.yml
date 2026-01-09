@@ -1,0 +1,91 @@
+name: 'LA build'
+description: 'Build the LA app'
+inputs:
+  GTEST_FILTER:
+    description: "The filter to be applied to gtest execution."
+    default: "-INTEGRATION*"
+  BUILD_DIR:
+    description: "The build directory."
+    default: "_build"
+  MACOS_SIGNING_IDENTITY:
+    description: "The signing identity to use if no default is provided."
+    default: "-"
+  CONFIG:
+    description: "The build configuration, debug or release"
+  APP_NAME:
+    description: "The library or app name"
+  RUNNER_ARCH:
+    description: "The output requested architecture"
+    default: "x64"
+  GITHUB_TOKEN:
+    description: "The github token used to push package"
+
+runs:
+  using: composite
+  steps:
+    - name: Check support
+      shell: bash
+      run: |
+        supported_os=("Windows" "macOS")
+        input_os=${{runner.os}}
+        if [[ ! " ${supported_os[@]} " =~ " $input_os " ]]; then
+          echo "Error: Un-supported OS ${{runner.os}}. Supported os values: ${supported_os[*]}."
+          exit 1
+        fi
+        echo "Running on platform [$input_os]"
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "RUNNER_OS=${{runner.os}}" >> $GITHUB_ENV
+        echo "RUNNER_ARCH=${{inputs.RUNNER_ARCH}}" >> $GITHUB_ENV
+        echo "APP_NAME=${{inputs.APP_NAME}}" >> $GITHUB_ENV
+        echo "GITHUB_TOKEN=${{inputs.GITHUB_TOKEN}}" >> $GITHUB_ENV
+        echo "BUILD_DIRECTORY=${{inputs.BUILD_DIR}}_${{inputs.RUNNER_ARCH}}" >> $GITHUB_ENV
+
+    - name: Prepare project
+      shell: bash
+      run: |
+        echo "create .config"
+        cp .config.sample .config
+
+        echo "create .default.sh"
+        cp .defaults.sh.sample .defaults.sh
+
+        echo "Call setup_fresh_env.sh"
+        ./setup_fresh_env.sh
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        version: '6.8.2'
+        host: 'mac'
+        target: 'desktop'
+        arch: 'clang_64'
+
+    - name: Call gen_install
+      shell: bash
+      run: |
+        echo "Generating CMake for Configuration : ${{inputs.CONFIG}}"
+        ./gen_install.sh -c Ninja
+
+    - name: Build
+      shell: bash
+      run: |
+        cmake --build ${{env.BUILD_DIRECTORY}} --target Tests
+
+    - name: Test
+      shell: bash
+      run: |
+        cd ${{env.BUILD_DIRECTORY}}/tests/src
+        test_cmd="./Tests --gtest_filter=${{inputs.GTEST_FILTER}}"
+        if [ "${{matrix.config}}" = "debug" ]; then
+          test_cmd="./Tests-d --gtest_filter=${{inputs.GTEST_FILTER}}"
+        fi
+        eval $test_cmd
+
+    - name: Build all
+      shell: bash
+      run: |
+        cmake --build ${{env.BUILD_DIRECTORY}}
