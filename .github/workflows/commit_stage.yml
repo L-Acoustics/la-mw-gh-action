@@ -269,6 +269,7 @@ jobs:
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build-app@dev
       if: inputs.repository_type == 'app'
       with:
+        KEYCHAIN_PASSWORD: ${{secrets.KEYCHAIN_PASSWORD}}
         RUNNER_ARCH: ${{matrix.arch}}
         GTEST_FILTER: '${{needs.pre-workflow-checks.outputs.GTEST_FILTER}}'
         BUILD_DIR: "${{needs.pre-workflow-checks.outputs.BUILD_DIR}}"

@@ -1,6 +1,8 @@
 name: 'LA build'
 description: 'Build the LA app'
 inputs:
+  KEYCHAIN_PASSWORD:
+    description: "The keychain password holding the certificates for signing."
   GTEST_FILTER:
     description: "The filter to be applied to gtest execution."
     default: "-INTEGRATION*"
@@ -47,7 +49,8 @@ runs:
       shell: bash
       run: |
         echo "create .config"
-        cp .config.sample .config
+        echo "Setting notarization profile."
+        sed 's/.*notarization_profile.*/notarization_profile=lacoustics/' .config.sample > .config
 
         echo "create .default.sh"
         cp .defaults.sh.sample .defaults.sh
@@ -58,40 +61,24 @@ runs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.10.*'
+        version: '6.10.2'
         setup-python: false
         cache: true
 
-    - name: Check Qt install
-      if: 1 == 0
+    - name: Build app
       shell: bash
       run: |
-        ls -la $QT_ROOT_DIR/lib/cmake
-        ls -la $QT_ROOT_DIR/lib/cmake/Qt6
+        KEYCHAIN_PASSWORD=${{inputs.KEYCHAIN_PASSWORD}}
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD"
 
-    - name: Call gen_install
-      shell: bash
-      run: |
-        echo "Generating CMake for Configuration : ${{inputs.CONFIG}}"
+        echo "Building for config: ${{inputs.CONFIG}}"
         qtdir="$QT_ROOT_DIR/lib/cmake"
-        ./gen_install.sh -c Ninja -qtdir $qtdir -qtvers 6.8.3
+        ./gen_install.sh -c Ninja -qtdir $qtdir -qtvers 6.10.2
 
-    - name: Build
-      shell: bash
-      run: |
-        cmake --build ${{env.BUILD_DIRECTORY}} --target Tests
-
-    - name: Test
-      shell: bash
-      run: |
-        cd ${{env.BUILD_DIRECTORY}}/tests/src
-        test_cmd="./Tests --gtest_filter=${{inputs.GTEST_FILTER}}"
-        if [ "${{matrix.config}}" = "debug" ]; then
-          test_cmd="./Tests-d --gtest_filter=${{inputs.GTEST_FILTER}}"
-        fi
-        eval $test_cmd
-
-    - name: Build all
-      shell: bash
-      run: |
-        cmake --build ${{env.BUILD_DIRECTORY}}
+    - name: Build artifacts
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos_build_artifacts
+        path: _deliverables/*.*
+        retention-days: 5
