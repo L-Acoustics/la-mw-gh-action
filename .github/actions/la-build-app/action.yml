@@ -61,24 +61,63 @@ runs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.10.2'
+        version: '6.8.3'
         setup-python: false
         cache: true
+
+    - name: Patch Qt 6.8
+      shell: bash
+      run : |
+        echo '@@ -37,13 +37,13 @@
+                     set(__opengl_fw_path "-framework OpenGL")
+                 endif()
+
+        -        find_library(WrapOpenGL_AGL NAMES AGL)
+        -        if(WrapOpenGL_AGL)
+        -            set(__opengl_agl_fw_path "${WrapOpenGL_AGL}")
+        -        endif()
+        -        if(NOT __opengl_agl_fw_path)
+        -            set(__opengl_agl_fw_path "-framework AGL")
+        -        endif()
+        +        # find_library(WrapOpenGL_AGL NAMES AGL)
+        +        # if(WrapOpenGL_AGL)
+        +        #     set(__opengl_agl_fw_path "${WrapOpenGL_AGL}")
+        +        # endif()
+        +        # if(NOT __opengl_agl_fw_path)
+        +        #     set(__opengl_agl_fw_path "-framework AGL")
+        +        # endif()
+
+                 target_link_libraries(WrapOpenGL::WrapOpenGL INTERFACE ${__opengl_fw_path})
+                 target_link_libraries(WrapOpenGL::WrapOpenGL INTERFACE ${__opengl_agl_fw_path})
+                 
+                 ' > qt.patch
+        cat qt.patch
+        patch $QT_ROOT_DIR/lib/cmake/Qt6/FindWrapOpenGL.cmake < qt.patch
+
+        cat $QT_ROOT_DIR/lib/cmake/Qt6/FindWrapOpenGL.cmake
 
     - name: Build app
       shell: bash
       run: |
-        KEYCHAIN_PASSWORD=${{inputs.KEYCHAIN_PASSWORD}}
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD"
+        # KEYCHAIN_PASSWORD=${{inputs.KEYCHAIN_PASSWORD}}
+        # security unlock-keychain -p "$KEYCHAIN_PASSWORD"
 
         echo "Building for config: ${{inputs.CONFIG}}"
         qtdir="$QT_ROOT_DIR/lib/cmake"
-        ./gen_install.sh -c Ninja -qtdir $qtdir -qtvers 6.10.2
+        ./gen_install.sh -c Ninja -qtdir $qtdir -qtvers 6.8.3
 
     - name: Build artifacts
       if: runner.os == 'macOS'
       uses: actions/upload-artifact@v4
       with:
-        name: macos_build_artifacts
+        name: macos_build_artifacts_${{inputs.CONFIG}}
+        path: _deliverables/*.*
+        retention-days: 5
+
+    - name: Build artifacts
+      if: runner.os != 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows_build_artifacts_${{inputs.CONFIG}}
         path: _deliverables/*.*
         retention-days: 5
