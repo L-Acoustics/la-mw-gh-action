@@ -4,7 +4,7 @@ description: 'Builds SWIG from source for Linux, macOS, and Windows'
 inputs:
   short_sha:
     description: The Commit short sha (8 characters) to use for building swig
-    default: e1fae6f8
+    default: bb1f2210
 
 outputs:
   swig_exec:
