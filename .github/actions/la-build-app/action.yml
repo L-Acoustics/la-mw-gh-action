@@ -2,7 +2,10 @@ name: 'LA build'
 description: 'Build the LA app'
 inputs:
   KEYCHAIN_PASSWORD:
-    description: "The keychain password holding the certificates for signing."
+    description: "The password to unlock the Keychain holding the certificates for code signing."
+  NOTARIZATION_PROFILE:
+    description: "The Profile to use for notarization."
+    default: ""
   GTEST_FILTER:
     description: "The filter to be applied to gtest execution."
     default: "-INTEGRATION*"
@@ -42,6 +45,7 @@ runs:
         echo "RUNNER_OS=${{runner.os}}" >> $GITHUB_ENV
         echo "RUNNER_ARCH=${{inputs.RUNNER_ARCH}}" >> $GITHUB_ENV
         echo "APP_NAME=${{inputs.APP_NAME}}" >> $GITHUB_ENV
+        echo "NOTARIZATION_PROFILE=${{inputs.NOTARIZATION_PROFILE}}" >> $GITHUB_ENV
         echo "GITHUB_TOKEN=${{inputs.GITHUB_TOKEN}}" >> $GITHUB_ENV
         echo "BUILD_DIRECTORY=${{inputs.BUILD_DIR}}_${{inputs.RUNNER_ARCH}}" >> $GITHUB_ENV
 
@@ -50,7 +54,11 @@ runs:
       run: |
         echo "create .config"
         echo "Setting notarization profile."
-        sed 's/.*notarization_profile.*/notarization_profile=lacoustics/' .config.sample > .config
+        cp .config.sample .config
+        if [[ $NOTARIZATION_PROFILE != "" ]]; then
+          rm .config
+          sed "s|.*notarization_profile.*|notarization_profile=${NOTARIZATION_PROFILE}|" .config.sample > .config
+        fi
 
         echo "create .default.sh"
         cp .defaults.sh.sample .defaults.sh
