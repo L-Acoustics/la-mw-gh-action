@@ -3,6 +3,18 @@
 This repository holds the composite actions and reusable workflows to be used to build test and release L-Acoustics libraries and Application.
 It currently supports projects built using the L-Acoustics middleware scripts.
 
+## Table of content
+
+- [Usage of reusable workflows](#usage-of-reusable-workflows)
+  - [Repository variables and secrets](#repository-variables-and-secrets)
+  - [Workflow configuration (json)](#workflow-configuration-json)
+  - [Build config schema](#build-config-schema)
+    - [Set build configuration programatically](#set-build-configuration-programatically)
+  - [How to set repository secrets and variables](#how-to-set-repository-secrets-and-variables)  
+    - [(Recommended) Github cli](#recommended-github-cli)
+  - [Using a GitHub App to authenticate private submodules ](#using-a-github-app-to-authenticate-private-submodules)
+  - [How to setup Notarization for MacOS apps builds](#how-to-setup-notarization-for-macos-apps-builds)
+
 ## Usage of reusable workflows
 
 The reusable workflows should be called from a workflow defined within the target repository. (see [Reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows) on github).
@@ -25,6 +37,8 @@ The **secrets** are :
 |APPLE_CERTIFICATES_P12_BASE64|_required_| *SECRETS* The base64 value of the p12 certificate file|
 |PRIVATE_KEY_APP_CHECKOUT|_optional_| *SERCRETS* The app private key for custom token generation (cf. [Use github app](#using-a-github-app-to-authenticate-private-submodules))|
 |PAT_CHECKOUT|_optional_| *SERCRETS* A Private Access Token to be used during checkout. |
+|NOTARIZATION_PROFILE_PASSWORD|_optional_| *SERCRETS* The password for the notarization profile, only relevant if building on Macos |
+|NOTARIZATION_APPLE_ID|_optional_| *SERCRETS* The apple id used for notarization, only relevant if building on Macos|
 
 The **variables** are:
 |name|default|description|
@@ -41,7 +55,7 @@ The **required parameters** are:
 |key|default|description|
 |----|----------|-----------|
 |runner_configs             |_required |The array containing the runner configuration to use.                           |
-|macos_signing_identity     |_required_|The signing identity to use during macos signing e.g. "MY_COMPANY (MY_TEAM_ID)" |
+|macos_signing_identity     |_required_|The signing identity to use during macos signing e.g. "MY_COMPANY (MY_TEAM_ID), only relevant if building on Macos" |
 |package_name               |_required_|The name of the package that will be pushed e.g. 'my_avdecc_controller'         |
 
 The **optional parameters** are:
@@ -53,6 +67,8 @@ The **optional parameters** are:
 |include_nuget_la_feed      |'false'                                                |Whether to register L-Acoustics nuget feed, should be set to 'false' if NUGET_PUBLISH_FEED_URL is set to L-Acoustics one|
 |winpcap_destination_root|"." (current folder)                                      | The folder to which the winpcap expected path will be appended. i.e. `$winpcap_destination_root/externals/3rdparty/winpcap` |
 |alternative_bashutils_path|"." (current folder)                                    | The folder to which the bashUtils expected path will be appended. i.e. `$alternative_bashutils_path/scripts/bashUtils` |
+|notarization_profile      |''                                                | The notarization profile name to setup. e.g. lacoustics, only relevant if building on Macos |
+|notarization_team_id      |''                                                | The signing team id to use for notarization. e.g. 4WPJ48N2K4, only relevant if building on Macos |
 
 ### Build config schema
 The build configuration is done through a json string read within the workflow. This Json string should be set as a repository variable.
@@ -109,6 +125,12 @@ The schema of the json object is shown bellow:
     "winpcap_destination_root": {
       "type": "string"
     },
+    "notarization_profile": {
+      "type": "string"
+    },
+    "notarization_team_id": {
+      "type": "string"
+    },
     "build_directory": {
       "type": "string"
     },
@@ -148,12 +170,14 @@ An example of a configuration:
   ],
   "gtest_filter":"-MYTESTS*",
   "macos_signing_identity":"COM_COMPANY (QABCD123)",
-  "package_name": "my_package_to_push"
+  "package_name": "my_package_to_push",
+  "notarization_profile": "my_notarization_profile",
+  "notarization_team_id": "QABCD123"
 }
 ```
 As a single line string.
 ```text
-"{\"runner_configs\":[{\"labels\":\"ubuntu-22.04\",\"arch\":\"x64\"},{\"labels\":\"ubuntu-22.04-arm\",\"arch\":\"arm64\"},{\"labels\":\"windows-2022\",\"arch\":\"x64\"},{\"labels\":\"macos-14\",\"arch\":\"x64\"},{\"labels\":\"macos-14\",\"arch\":\"arm64\"},{\"labels\":\"macos-14\",\"arch\":\"universal\"}],\"gtest_filter\":\"-MANUAL*\",\"macos_signing_identity\":\"L-ACOUSTICS (4WPJ48N2K4)\",\"package_name\":\"la_networkInterfaceHelper\"}"
+"{\"runner_configs\":[{\"labels\":\"ubuntu-22.04\",\"arch\":\"x64\"},{\"labels\":\"ubuntu-22.04-arm\",\"arch\":\"arm64\"},{\"labels\":\"windows-2022\",\"arch\":\"x64\"},{\"labels\":\"macos-14\",\"arch\":\"x64\"},{\"labels\":\"macos-14\",\"arch\":\"arm64\"},{\"labels\":\"macos-14\",\"arch\":\"universal\"}],\"gtest_filter\":\"-MANUAL*\",\"macos_signing_identity\":\"L-ACOUSTICS (4WPJ48N2K4)\",\"package_name\":\"la_networkInterfaceHelper\",\"notarization_profile\":\"lacoustics\",\"notarization_team_id\":\"4WPJ48N2K4\"}"
 ```
 #### Set build configuration programatically
 
@@ -223,3 +247,26 @@ PRIVATE_KEY_APP_CHECKOUT="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRI
 Behavior notes:
 - When `USE_GH_APP_CHECKOUT` is `"True"`, the workflows call `actions/create-github-app-token` to exchange the app credentials for an installation token, and `actions/checkout` uses that token with `persist-credentials: false`.
 - If `USE_GH_APP_CHECKOUT` is enabled but `PRIVATE_KEY_APP_CHECKOUT` or `APP_ID_CHECKOUT` are not provided the workflow will fail early with an explanatory message.
+
+### How to setup Notarization for MacOS apps builds
+
+To enable the notarization of the macos application installers, the following secrets and variables should be setup in the repository:
+- `NOTARIZATION_APPLE_ID`: repository **secret**. The apple id used for notarization.
+- `NOTARIZATION_PROFILE_PASSWORD`: repository **secret**. The password for the notarization profile.
+- `notarization_profile`: key-value pair inside the Json config repository **variable** (cf [Repository variables and secrets](#repository-variables-and-secrets) and [Workflow configuration](#workflow-configuration-json)). The notarization profile name to use.
+- `notarization_team_id`: key-value pair inside the Json config repository **variable** (cf [Repository variables and secrets](#repository-variables-and-secrets) and [Workflow configuration](#workflow-configuration-json)). The signing team id to use for notarization.
+
+:warning: The value of `notarization_team_id` should the team id associated to the apple id used for notarization.
+
+In order to work, the secrets should be passed to the `commit_stage`reusable workflow. (cf [workflow templates](#usage-of-reusable-workflows))
+```yaml
+      # My repository .github/workflows/ci.yml
+      - name: Commit Stage
+        uses: L-Acoustics/la-mw-gh-action/.github/workflows/commit_stage.yml@main
+        with:
+          ...
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PROFILE_PASSWORD: ${{ secrets.NOTARIZATION_PROFILE_PASSWORD }}
+```
+
+If any of these secrets or variables are missing, the notarization step will be skipped during the macos build.

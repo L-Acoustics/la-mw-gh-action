@@ -5,6 +5,8 @@ on :
     secrets:
       GH_TOKEN:
       APPLE_CERTIFICATES_P12_BASE64_PASSWORD:
+      NOTARIZATION_PROFILE_PASSWORD:
+      NOTARIZATION_APPLE_ID:
       APPLE_CERTIFICATES_P12_BASE64:
       KEYCHAIN_PASSWORD:
       PRIVATE_KEY_APP_CHECKOUT:
@@ -40,6 +42,8 @@ jobs:
       matrix: ${{ steps.config-matrix.outputs.matrix }}
       LIB_NAME: ${{ steps.set-config.outputs.LIB_NAME }}
       APP_NAME: ${{ steps.set-config.outputs.APP_NAME }}
+      NOTARIZATION_PROFILE: ${{ steps.set-config.outputs.NOTARIZATION_PROFILE }}
+      NOTARIZATION_TEAM_ID: ${{ steps.set-config.outputs.NOTARIZATION_TEAM_ID }}
       MACOS_SIGNING_IDENTITY: ${{ steps.set-config.outputs.MACOS_SIGNING_IDENTITY }}
       GTEST_FILTER: ${{ steps.set-config.outputs.GTEST_FILTER }}
       INCLUDE_NUGET_LA_FEED: ${{ steps.set-config.outputs.INCLUDE_NUGET_LA_FEED }}
@@ -89,7 +93,11 @@ jobs:
           include_nuget_la_feed=$(echo "$build_config" | jq -c -e 'if has("include_nuget_la_feed") then .include_nuget_la_feed else "false" end')
           nuget_publish_feed_url=$(echo "$build_config" | jq -c -e 'if has("nuget_publish_feed_url") then .nuget_publish_feed_url else "https://nuget.pkg.github.com/${{github.repository_owner}}/index.json" end')
 
+          notarization_profile=$(echo "$build_config" | jq -c -e 'if has("notarization_profile") then .notarization_profile else "" end')
+          notarization_team_id=$(echo "$build_config" | jq -c -e 'if has("notarization_team_id") then .notarization_team_id else "" end')
           # Writting output so that it is available to sub-sequent jobs
+          echo "NOTARIZATION_PROFILE=$notarization_profile" >> $GITHUB_OUTPUT
+          echo "NOTARIZATION_TEAM_ID=$notarization_team_id" >> $GITHUB_OUTPUT
           echo "GTEST_FILTER=$gtest_filter" >> $GITHUB_OUTPUT
           echo "INCLUDE_NUGET_LA_FEED=$include_nuget_la_feed" >> $GITHUB_OUTPUT
           echo "NUGET_PUBLISH_FEED_URL=$nuget_publish_feed_url" >> $GITHUB_OUTPUT
@@ -256,9 +264,13 @@ jobs:
         short_sha: bb1f2210
 
 
-    - name: Configure runner
+    - name: Configure host
       uses: L-Acoustics/la-mw-gh-action/.github/actions/la-configure-runner@dev
       with:
+        NOTARIZATION_PROFILE: ${{needs.pre-workflow-checks.outputs.NOTARIZATION_PROFILE}}
+        NOTARIZATION_TEAM_ID: ${{needs.pre-workflow-checks.outputs.NOTARIZATION_TEAM_ID}}
+        NOTARIZATION_PROFILE_PASSWORD: ${{secrets.NOTARIZATION_PROFILE_PASSWORD}}
+        NOTARIZATION_APPLE_ID: ${{secrets.NOTARIZATION_APPLE_ID}}
         WINPCAP_ROOT_DESTINATION: ${{needs.pre-workflow-checks.outputs.WINPCAP_ROOT_DESTINATION}}
         APPLE_CERTIFICATES_P12_BASE64_PASSWORD: ${{secrets.APPLE_CERTIFICATES_P12_BASE64_PASSWORD}}
         APPLE_CERTIFICATES_P12_BASE64: ${{secrets.APPLE_CERTIFICATES_P12_BASE64}}
