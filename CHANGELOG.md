@@ -10,10 +10,13 @@ This project follows incremental versioning.
 - Workflow variable `release` to declare whether the current build is a release build or not (default to false).
 - Allow execution of the validate job if the PR comes from a forked repository.
 - Upagre `action/checkout` to v5.
-- Use `action/create-github-app-token` v2
+- Use `action/create-github-app-token` v2.
 - Documentation to use github app to authenticate private submodules.
 - By default `pre-workflow-checks`, `build-test` only run when called within a L-Acoustics repository, can be override with given variable.
+- Added Github action to build app.
+- Added variables for setting up notarization of apps during macos installer generation.
+
 ### Removed
-- Workflow variable `WINPCAP_ROOT_DESTINATION` and ÀLTERNATIVE_BASHUTILS_PATH`, replaced by build configuration parameters.
+- Workflow variable `WINPCAP_ROOT_DESTINATION` and `ALTERNATIVE_BASHUTILS_PATH`, replaced by build configuration parameters.
 - Workflow variable `release_linux`, `release_macos`, `release_windows`, replaced by single `release` variable.
 - Old prepare matrix job in release stage.

@@ -1,17 +1,29 @@
 name: 'Configure LA Runner'
 description: 'Configure the runner to build LA lib/app'
 inputs:
+  NOTARIZATION_PROFILE:
+    default: ''
+    description: '(Macos) The notarization profile name to be setup'
+  NOTARIZATION_TEAM_ID:
+    default: ''
+    description: '(Macos) The Team id to be used for notarization.'
+  NOTARIZATION_PROFILE_PASSWORD:
+    default: ''
+    description: '(Macos) The apple account password to use for notarization'
+  NOTARIZATION_APPLE_ID:
+    default: ''
+    description: '(Macos) The Apple account id to use for notarization'
   KEYCHAIN_PASSWORD:
-    description:  'The keychain password to use'
+    description:  '(Macos) The keychain password to use'
   APPLE_CERTIFICATES_P12_BASE64_PASSWORD:
-    description: 'The app certificate password'
+    description: '(Macos) The app certificate password'
   APPLE_CERTIFICATES_P12_BASE64:
-    description: 'The base64 encoded certificate for app signing'
+    description: '(Macos) The base64 encoded certificate for app signing'
   WINPCAP_ROOT_DESTINATION:
     description: 'The root folder into which winpcap will be installed e.g. $root/externals/3rdparty/winpcap default is the current folder'
     default: "."
   setup_keychain:
-    description: 'Should setup the keychain certificate for macos code signing.'
+    description: '(Macos) Should setup the keychain certificate for macos code signing.'
     default: 'false'
 
 runs:
@@ -134,3 +146,21 @@ runs:
         security set-key-partition-list -S pkgbuild:,productbuild:,apple-tool:,apple:,codesign:,productsign: -s -k "$KEYCHAIN_PASSWORD" action.keychain
         echo "Printing available identities:"
         security find-identity -v
+
+    - name: Setup Notarization Profile
+      if: runner.os == 'macOS' && inputs.setup_keychain == 'true'
+      shell: bash
+      run: |
+
+        NOTARIZATION_PROFILE=${{inputs.NOTARIZATION_PROFILE}}
+        NOTARIZATION_TEAM_ID=${{inputs.NOTARIZATION_TEAM_ID}}
+        NOTARIZATION_PROFILE_PASSWORD=${{inputs.NOTARIZATION_PROFILE_PASSWORD}}
+        NOTARIZATION_APPLE_ID=${{inputs.NOTARIZATION_APPLE_ID}}
+
+        if [[ $NOTARIZATION_PROFILE == "" || $NOTARIZATION_APPLE_ID == "" || $NOTARIZATION_PROFILE_PASSWORD == "" || $NOTARIZATION_TEAM_ID == "" ]]; then
+          echo "Notarization variable missing, no profiles will be set."
+          echo ":warning: Notarization variables missing, no notarization profiles will be setup" >> $GITHUB_STEP_SUMMARY
+          exit 0
+        fi
+
+        xcrun notarytool store-credentials $NOTARIZATION_PROFILE --apple-id $NOTARIZATION_APPLE_ID --password $NOTARIZATION_PROFILE_PASSWORD --team-id $NOTARIZATION_TEAM_ID
