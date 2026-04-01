@@ -256,7 +256,7 @@ jobs:
       if: ${{ vars.USE_GH_APP_CHECKOUT != 'True' && env.PAT_CHECKOUT == '' }}
       with:
         submodules: recursive
-    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v3
+    - uses: L-Acoustics/la-mw-gh-action/.github/actions/la-swig@v4
       if: inputs.repository_type == 'lib'
       name: Install custom SWIG
       id: la_swig
@@ -291,7 +291,7 @@ jobs:
         GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
 
     - name: Build and Test Library
-      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v3
+      uses: L-Acoustics/la-mw-gh-action/.github/actions/la-build@v4
       if: inputs.repository_type == 'lib'
       with:
         push_bindings: "${{ inputs.release == 'true' || github.ref_type == 'tag' }}"
