@@ -4,7 +4,7 @@ description: 'Builds SWIG from source for Linux, macOS, and Windows'
 inputs:
   short_sha:
     description: The Commit short sha (8 characters) to use for building swig
-    default: bb1f2210
+    default: aa3dcdb1
 
 outputs:
   swig_exec:
@@ -105,6 +105,7 @@ runs:
           -DCMAKE_C_FLAGS="/W3 /EHsc /DPCRE2_STATIC" `
           -DCMAKE_CXX_FLAGS="/W3 /EHsc /DPCRE2_STATIC" `
           -DPCRE2_INCLUDE_DIR="$env:PCRE2_PATH\include" `
+          -DPCRE2_USE_STATIC_LIBS=ON `
           -DPCRE2_LIBRARY="$env:PCRE2_PATH\lib\pcre2-8-static.lib" `
           -DLINK_FLAGS="/NODEFAULTLIB:MSVCRT" -S . -B build
 
