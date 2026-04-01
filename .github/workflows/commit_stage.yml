@@ -240,7 +240,7 @@ jobs:
       name: Install custom SWIG
       id: la_swig
       with:
-        short_sha: bb1f2210
+        short_sha: aa3dcdb1
 
 
     - name: Configure runner
