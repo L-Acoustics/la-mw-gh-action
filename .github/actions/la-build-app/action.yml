@@ -70,7 +70,8 @@ runs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.3'
-        setup-python: false
+        python-version: '3.12'
+        setup-python: true
         cache: true
 
     - name: Patch Qt 6.8
