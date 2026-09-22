@@ -80,6 +80,7 @@ runs:
       with:
         version: '6.8.3'
         setup-python: false
+        py7zrversion: '0.22.0'
         cache: true
 
     - name: Patch Qt 6.8
