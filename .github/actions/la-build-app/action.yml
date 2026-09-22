@@ -75,12 +75,27 @@ runs:
         mkdir -p "$HOME"
         echo "Runner home: $HOME"
 
+    - name: Install Qt (macOS workaround)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        python3 --version
+        python3 -m pip install --upgrade pip
+        python3 -m pip install "py7zr==0.22.0" "aqtinstall>=3.1.0"
+        QT_DIR="$RUNNER_TEMP/Qt"
+        mkdir -p "$QT_DIR"
+        python3 -m aqt install-qt mac desktop 6.8.3 macos --outputdir "$QT_DIR"
+        QT_ROOT_DIR="$QT_DIR/6.8.3/macos"
+        echo "QT_ROOT_DIR=$QT_ROOT_DIR" >> "$GITHUB_ENV"
+        echo "QTDIR=$QT_ROOT_DIR" >> "$GITHUB_ENV"
+        ls -la "$QT_ROOT_DIR"
+
     - name: Install Qt
+      if: runner.os != 'macOS'
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.3'
         setup-python: false
-        py7zrversion: '0.22.0'
         cache: true
 
     - name: Patch Qt 6.8
