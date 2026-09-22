@@ -66,12 +66,16 @@ runs:
         echo "Call setup_fresh_env.sh"
         ./setup_fresh_env.sh
 
+    - name: Setup Python for Qt install
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.3'
-        python-version: '3.12'
-        setup-python: true
+        setup-python: false
         cache: true
 
     - name: Patch Qt 6.8
