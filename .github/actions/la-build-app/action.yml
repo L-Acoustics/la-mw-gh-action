@@ -87,7 +87,7 @@ runs:
         QT_DIR="$RUNNER_TEMP/Qt"
         mkdir -p "$QT_DIR"
         python3 -m aqt install-qt mac desktop 6.8.3 clang_64 --outputdir "$QT_DIR"
-        QT_ROOT_DIR="$QT_DIR/6.8.3/clang_64"
+        QT_ROOT_DIR="$QT_DIR/6.8.3/macos"
         echo "QT_ROOT_DIR=$QT_ROOT_DIR" >> "$GITHUB_ENV"
         echo "QTDIR=$QT_ROOT_DIR" >> "$GITHUB_ENV"
         ls -la "$QT_ROOT_DIR"
