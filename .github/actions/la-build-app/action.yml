@@ -66,10 +66,14 @@ runs:
         echo "Call setup_fresh_env.sh"
         ./setup_fresh_env.sh
 
-    - name: Setup Python for Qt install
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+    - name: Fix runner home for self-hosted macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        export HOME="$(echo ~)"
+        echo "HOME=$HOME" >> "$GITHUB_ENV"
+        mkdir -p "$HOME"
+        echo "Runner home: $HOME"
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
